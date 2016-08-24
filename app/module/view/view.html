@@ -1,0 +1,20 @@
+<div id="view">
+    <div class="view-main"></div>
+    <div class="toolbar">
+        <button @click="focusCurrent" class="focus">Focus</button>
+        <button @click="load">Load</button>
+        <button @click="download">Download</button>
+    </div>
+    <div class="status">
+        <div class="render-stat">
+            <div>Time: {{renderStat.renderTime}}</div>
+            <div>Vertex: {{renderStat.vertexCount}}</div>
+            <div>Draw Call: {{renderStat.drawCallCount}}</div>
+        </div>
+    </div>
+    <!-- <div class="camera-position">
+        x: {{camera.x}},
+        y: {{camera.y}},
+        z: {{camera.z}}
+    </div> -->
+</div>

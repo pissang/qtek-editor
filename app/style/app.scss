@@ -1,0 +1,77 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    background-color: #222;
+}
+
+#app, .left, .center, .right {
+    height: 100%;
+
+    .left {
+        float: left;
+        width: 20%;
+    }
+
+    .center {
+        float: left;
+        width: 60%;
+
+    }
+
+    .right {
+        float: left;
+        width: 20%;
+    }
+}
+
+#view {
+    position: relative;
+    height: 100%;
+
+    .toolbar {
+        position: absolute;
+        left: 15px;
+        top: 15px;
+    }
+
+    .status {
+        position: absolute;
+        right: 15px;
+        top: 15px;
+        padding: 5px;
+        background-color: rgba(0, 0, 0, 0.5);
+        border-radius: 5px;
+        line-height: 25px;
+        color: #fff;
+    }
+
+    .view-main {
+        background-color: #111;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        bottom: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+    }
+}
+
+#inspector, #scene {
+    h5 {
+        color: #aaa;
+        font-size: 20px;
+        margin: 10px 20px;
+    }
+
+    .row {
+        padding: 5px 10px;
+
+        label {
+            color: #fff;
+            font-size: 14px;
+
+            display: block;
+            margin-bottom: 3px;
+        }
+    }
+}

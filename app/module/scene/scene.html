@@ -1,0 +1,9 @@
+<div id="scene">
+    <div id="ssao">
+        <h5>SSAO</h5>
+        <div class="row" v-for="(index, item) in ssao">
+            <label>{{item.title}}</label>
+            <component :is="item.type" :value.sync="item.value" :option="item"></component>
+        </div>
+    </div>
+</div>
