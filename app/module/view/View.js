@@ -55,6 +55,9 @@ export default {
             return obj;
         }, {});
 
+        var simpleProperties = ['color', 'specularColor', 'glossiness', 'alpha', 'emission'];
+        var textureProperies = ['diffuseMap', 'specularMap', 'normalMap'];
+
         function inspectMaterial(mesh) {
             var material = mesh.material;
             inspectorMaterialMap.materialId.value = material.name;
@@ -65,6 +68,17 @@ export default {
             inspectorMaterialMap.glossiness.value = material.get('glossiness');
             inspectorMaterialMap.alpha.value = material.get('alpha');
 
+            textureProperies.forEach(function (name) {
+                var texture = material.get(name);
+                if (texture && texture.image && texture.image.src) {
+                    inspectorMaterialMap[name].value =
+                        texture.image.src.split('/').pop();
+                }
+                else {
+                    inspectorMaterialMap[name].value = '';
+                }
+            });
+
             this._currentMesh = mesh;
         }
 
@@ -73,19 +87,51 @@ export default {
                 return;
             }
             var currentMaterial = this._currentMesh.material;
-            currentMaterial.set('color', parseColor(inspectorMaterialMap.color.value));
-            currentMaterial.set('specularColor', parseColor(inspectorMaterialMap.specularColor.value));
-            currentMaterial.set('emission', parseColor(inspectorMaterialMap.emission.value));
-            currentMaterial.set('glossiness', inspectorMaterialMap.glossiness.value);
-            currentMaterial.set('alpha', inspectorMaterialMap.alpha.value);
-            var isTransparent = inspectorMaterialMap.alpha.value < 1;
-            currentMaterial.transparent = isTransparent;
-            currentMaterial.depthMask = !isTransparent;
-
-            this._viewMain.render();
+            var config = {};
+            for (var name in inspectorMaterialMap) {
+                config[name] = inspectorMaterialMap[name].value;
+            }
+            setMaterial(currentMaterial, config);
+            viewMain.render();
         }, { deep: true });
 
+        function setMaterial(mat, config) {
+            var enabledTextures = textureProperies.filter(function (name) {
+                return config[name];
+            });
+            viewMain.updateShader(enabledTextures, mat);
+
+            mat.set('color', parseColor(config.color));
+            mat.set('specularColor', parseColor(config.specularColor));
+            mat.set('emission', parseColor(config.emission));
+            mat.set('glossiness', config.glossiness);
+            mat.set('alpha', config.alpha);
+
+            var isTransparent = config.alpha < 1;
+            mat.transparent = isTransparent;
+            mat.depthMask = !isTransparent;
+
+            textureProperies.forEach(function (name) {
+                var textureFileName = config[name];
+                if (textureFileName) {
+                    var texture = mat.get(name) || new qtek.Texture2D();
+                    var path = store.textureRootPath + '/' + textureFileName;
+                    if (texture && texture.image && texture.image.src === path) {
+                        return;
+                    }
+                    texture.load(path).success(function () {
+                        viewMain.render();
+                    });
+                    mat.set(name, texture);
+                }
+            });
+
+        }
+
         function stringifyColor(colorArr) {
+            if (typeof colorArr === 'string') {
+                return colorArr;
+            }
             return '#' + colorUtil.toHex(colorUtil.stringify(
                 [
                     Math.round(colorArr[0] * 255),
@@ -96,24 +142,31 @@ export default {
             ));
         }
 
-        function parseColor(colorStr) {
-            return colorUtil.parse(colorStr).slice(0, 3).map(function (channel) {
-                return channel / 255;
-            });
+        function parseColor(color) {
+            if (typeof color === 'string') {
+                return colorUtil.parse(color).slice(0, 3).map(function (channel) {
+                    return channel / 255;
+                });
+            }
+            return color || [0, 0, 0];
         }
 
         function saveLocal() {
             var materialMap = {};
             if (modelRootNode) {
                 modelRootNode.traverse(function (mesh) {
-                    if (mesh.material) {
-                        materialMap[mesh.material.name] = {
-                            color: mesh.material.get('color'),
-                            specularColor: mesh.material.get('specularColor'),
-                            glossiness: mesh.material.get('glossiness'),
-                            alpha: mesh.material.get('alpha'),
-                            emission: mesh.material.get('emission')
-                        };
+                    var material = mesh.material;
+                    if (material) {
+                        materialMap[material.name] = {};
+                        simpleProperties.forEach(function (propName) {
+                            materialMap[material.name][propName] = material.get(propName);
+                        });
+                        textureProperies.forEach(function (propName) {
+                            var tex = material.get(propName);
+                            if (tex && tex.image && tex.image.src) {
+                                materialMap[material.name][propName] = tex.image.src.split('/').pop();
+                            }
+                        });
                     }
                 });
             }
@@ -144,12 +197,7 @@ export default {
                 var material = mesh.material;
                 if (material && material.name && config.materials[material.name]) {
                     var materialConfig = config.materials[material.name];
-                    for (var key in materialConfig) {
-                        mesh.material.set(key, materialConfig[key]);
-                    }
-                    var isTransparent = materialConfig.alpha < 1;
-                    material.transparent = isTransparent;
-                    material.depthMask = !isTransparent;
+                    setMaterial(material, materialConfig);
                 }
             });
             for (var name in config.ssao) {

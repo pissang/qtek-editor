@@ -64,6 +64,8 @@ function NumberType(name, title, val, step) {
 
 var store = {
 
+    textureRootPath: 'http://localhost/baidu-screen/asset/texture/zhanqu/',
+
     renderStat: {
         renderTime: 0,
         vertexCount: 0,
@@ -95,10 +97,16 @@ var store = {
 
         new TextureType('diffuseMap', 'Diffuse Map'),
         new TextureType('normalMap', 'Normal Map'),
-        new TextureType('specularMap', 'Specular Map'),
+        new TextureType('specularMap', 'Specular Map')
 
-        new TextureType('environmentMap', 'Environment Map')
+        // new TextureType('environmentMap', 'Environment Map')
     ]
 };
+
+store.inspectorMaterial.forEach(function (mat) {
+    if (mat.type === 'texture') {
+        mat.textureRootPath = store.textureRootPath;
+    }
+});
 
 export default store;

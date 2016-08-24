@@ -236,13 +236,25 @@ class ViewMain {
                 node.material.shader.enableTexture('environmentMap');
                 node.material.shader.enableTexture('brdfLookup');
                 node.material.shader.define('fragment', 'ENVIRONMENTMAP_PREFILTER');
-                node.material.shader.extensions.push('GL_EXT_shader_texture_lod');
                 node.material.set('environmentMap', result.environmentMap);
                 node.material.set('brdfLookup', result.brdfLookup);
             }
         });
 
         this.render();
+    }
+
+    updateShader (enabledTextures, material) {
+        enabledTextures = enabledTextures.concat(['environmentMap']);
+        var shader = qtek.shader.library.get('buildin.standardExt', {
+            textures: enabledTextures,
+            fragmentDefines: {
+                ENVIRONMENTMAP_PREFILTER: null
+            }
+        });
+        if (shader !== material.shader) {
+            material.attachShader(shader, true);
+        }
     }
 
     setSsaoParameter (name, value) {
