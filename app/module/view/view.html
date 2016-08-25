@@ -4,6 +4,10 @@
         <button @click="focusCurrent" class="focus">Focus</button>
         <button @click="load">Load</button>
         <button @click="download">Download</button>
+        <span>
+            <input type="checkbox" id="switch-free-camera" v-model="useFreeCamera">
+            <label for="switch-free-camera">Free Camera</label>
+        </span>
     </div>
     <div class="status">
         <div class="render-stat">

@@ -37,13 +37,24 @@ class ViewMain {
 
         this._animation = animation;
 
-        var control = new qtek.plugin.OrbitControl({
+        var firstPersonControl = new qtek.plugin.FirstPersonControl({
+            target: camera,
+            domElement: dom,
+            animation: animation,
+            speed: 0.2
+        });
+        firstPersonControl.disable();
+        firstPersonControl.on('change', function () {
+            firstPersonControl.update(16);
+            this.render();
+        }, this);
+        var orbitControl = new qtek.plugin.OrbitControl({
             target: camera,
             domElement: dom,
             animation: animation
         });
-        control.on('change', function () {
-            control.update(16);
+        orbitControl.on('change', function () {
+            orbitControl.update(16);
             this.render();
         }, this);
 
@@ -66,7 +77,8 @@ class ViewMain {
         });
         scene.add(ambientLight);
 
-        this._control = control;
+        this._orbitControl = orbitControl;
+        this._firstPersonControl = firstPersonControl;
 
         this._initHandler();
 
@@ -76,10 +88,6 @@ class ViewMain {
         });
 
         this.resize();
-    }
-
-    getCamera () {
-        return this._camera;
     }
 
     _initHandler () {
@@ -119,13 +127,30 @@ class ViewMain {
         });
     }
 
+    getCamera () {
+        return this._camera;
+    }
+
+    switchFreeCamera (isFree) {
+        var enabledControl = isFree ? this._firstPersonControl : this._orbitControl;
+        var disabledControl = isFree ? this._orbitControl : this._firstPersonControl;
+        enabledControl.enable();
+        disabledControl.disable();
+        if (!isFree) {
+            this.setCameraPositionAndRotation(
+                this._camera.position._array,
+                this._camera.rotation._array
+            );
+        }
+    }
+
     setCameraPositionAndRotation (positionArr, rotationArr) {
         var camera = this._camera;
         camera.position.setArray(positionArr);
         camera.rotation.setArray(rotationArr);
         camera.update();
 
-        this._control.origin.copy(camera.position)
+        this._orbitControl.origin.copy(camera.position)
             .scaleAndAdd(camera.worldTransform.z, -10);
     }
 
@@ -178,17 +203,24 @@ class ViewMain {
         var bbox = new qtek.math.BoundingBox();
         var bboxTmp = new qtek.math.BoundingBox();
         var cp = new qtek.math.Vector3();
-        var avgZ = new qtek.math.Vector3();
+        // var avgZ = new qtek.math.Vector3();
         node.traverse(function (mesh) {
             if (mesh.geometry) {
                 bboxTmp.copy(mesh.geometry.boundingBox);
                 bboxTmp.applyTransform(mesh.worldTransform);
                 bbox.union(bboxTmp);
-                avgZ.add(mesh.worldTransform.z);
+                // avgZ.add(mesh.worldTransform.z);
             }
         });
 
-        avgZ.normalize();
+        var z = this._camera.worldTransform.z;
+
+
+        cp.add(bbox.min).add(bbox.max).scale(0.5);
+
+        // Get size;
+        bbox.applyTransform(this._camera.viewMatrix);
+        // avgZ.normalize();
         // var sub = new qtek.math.Vector3().copy(bboxTmp.max).sub(bboxTmp.min);
         // var min = Math.min(Math.abs(sub.x), Math.abs(sub.y), Math.abs(sub.z));
         // if (Math.abs(sub.x) === min) {
@@ -198,17 +230,14 @@ class ViewMain {
         //     // no y
         //     z = qtek.math.Vector3.POSITIVE_Z;
         // }
-
-        cp.add(bbox.min).add(bbox.max).scale(0.5);
-
         var bboxSize = bbox.min.distance(bbox.max);
 
-        this._camera.position.copy(new qtek.math.Vector3().add(cp).scaleAndAdd(avgZ, bboxSize * 2));
+        this._camera.position.copy(new qtek.math.Vector3().add(cp).scaleAndAdd(z, bboxSize * 1.5));
         this._camera.lookAt(cp, qtek.math.Vector3.UP);
 
         this.render();
 
-        this._control.origin.copy(cp);
+        this._orbitControl.origin.copy(cp);
     }
 
     loadPanorama (url, exposure) {

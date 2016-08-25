@@ -1,7 +1,10 @@
 <template>
 <div class="property-texture">
-    <img :src="value ? (option.textureRootPath + '/' + value ) : ''">
-    <div class="property-texture-upload">UPLOAD</div>
+    <div class="property-texture-upload-container">
+        <img :src="value ? (option.textureRootPath + '/' + value ) : ''">
+        <div class="property-texture-upload">UPLOAD</div>
+    </div>
+    <button @click="clear">清除</button>
 </div>
 </template>
 
@@ -24,7 +27,7 @@ module.exports = {
     },
     ready () {
         var self = this;
-        this.$el.addEventListener('click', function () {
+        this.$el.querySelector('.property-texture-upload').addEventListener('click', function () {
             var $input = $('<input type="file" />');
             $input[0].addEventListener('change', function (e) {
                 var file = e.target.files[0];
@@ -34,14 +37,22 @@ module.exports = {
             });
             $input.click();
         });
+    },
+    methods: {
+        clear: function () {
+            this.value = '';
+        }
     }
 };
 </script>
 
 <style lang="sass">
 .property-texture {
-    position: relative;
     min-height: 50px;
+
+    .property-texture-upload-container {
+        position: relative;
+    }
 
     .property-texture-upload {
         line-height: 100%;

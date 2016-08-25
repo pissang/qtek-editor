@@ -122,7 +122,11 @@ export default {
                     texture.load(path).success(function () {
                         viewMain.render();
                     });
+                    // FIXME
                     mat.set(name, texture);
+                }
+                else {
+                    mat.set(name, null);
                 }
             });
 
@@ -231,6 +235,10 @@ export default {
 
         this._saveLocal = saveLocal;
 
+
+        this.$watch('useFreeCamera', function () {
+            viewMain.switchFreeCamera(this.useFreeCamera);
+        });
 
         // https://github.com/jeresig/jquery.hotkeys
         $(document).bind('keydown', 'ctrl+s', function () {

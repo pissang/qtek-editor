@@ -72,6 +72,8 @@ var store = {
         drawCallCount: 0
     },
 
+    useFreeCamera: false,
+
     currentCamera: {
         position: null,
         rotation: null
