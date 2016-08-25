@@ -240,6 +240,11 @@ export default {
             viewMain.switchFreeCamera(this.useFreeCamera);
         });
 
+        this.$watch('enableSsao', function () {
+            viewMain.enableSsao = this.enableSsao;
+            viewMain.render();
+        });
+
         // https://github.com/jeresig/jquery.hotkeys
         $(document).bind('keydown', 'ctrl+s', function () {
             saveLocal();

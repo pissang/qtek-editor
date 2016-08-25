@@ -1,9 +1,15 @@
 <div id="scene">
     <div id="ssao">
         <h5>SSAO</h5>
-        <div class="row" v-for="(index, item) in ssao">
-            <label>{{item.title}}</label>
-            <component :is="item.type" :value.sync="item.value" :option="item"></component>
+        <div class="rows">
+            <div class="row">
+                <label>是否启用</label>
+                <input type="checkbox" v-model="enableSsao" />
+            </div>
+            <div class="row" v-for="(index, item) in ssao">
+                <label>{{item.title}}</label>
+                <component :is="item.type" :value.sync="item.value" :option="item"></component>
+            </div>
         </div>
     </div>
 </div>

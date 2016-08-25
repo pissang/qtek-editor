@@ -12,6 +12,9 @@ qtek.shader.library.template(
 
 class ViewMain {
     constructor(dom) {
+        this.enableSsao = true;
+
+
         var renderer = new qtek.Renderer({
             canvas: document.createElement('canvas'),
             devicePixelRatio: 1
@@ -37,26 +40,22 @@ class ViewMain {
 
         this._animation = animation;
 
-        var firstPersonControl = new qtek.plugin.FirstPersonControl({
-            target: camera,
-            domElement: dom,
-            animation: animation,
-            speed: 0.2
+        this._initScene();
+
+        this._initControl();
+
+        this._initHandler();
+
+        this._ssaoPass = new SSAOPass({
+            radius: 0.5,
+            kernelSize: 128
         });
-        firstPersonControl.disable();
-        firstPersonControl.on('change', function () {
-            firstPersonControl.update(16);
-            this.render();
-        }, this);
-        var orbitControl = new qtek.plugin.OrbitControl({
-            target: camera,
-            domElement: dom,
-            animation: animation
-        });
-        orbitControl.on('change', function () {
-            orbitControl.update(16);
-            this.render();
-        }, this);
+
+        this.resize();
+    }
+
+    _initScene () {
+        var scene = this._scene;
 
         var sunLight = new qtek.light.Directional({
             intensity: 0.8
@@ -77,17 +76,34 @@ class ViewMain {
         });
         scene.add(ambientLight);
 
+    }
+
+    _initControl () {
+
+        var firstPersonControl = new qtek.plugin.FirstPersonControl({
+            target: this._camera,
+            domElement: this._dom,
+            animation: this._animation,
+            speed: 0.2
+        });
+        firstPersonControl.disable();
+        firstPersonControl.on('change', function () {
+            firstPersonControl.update(16);
+            this.render();
+        }, this);
+        var orbitControl = new qtek.plugin.OrbitControl({
+            target: this._camera,
+            domElement: this._dom,
+            animation: this._animation
+        });
+        orbitControl.on('change', function () {
+            orbitControl.update(16);
+            this.render();
+        }, this);
+
         this._orbitControl = orbitControl;
         this._firstPersonControl = firstPersonControl;
 
-        this._initHandler();
-
-        this._ssaoPass = new SSAOPass({
-            radius: 0.5,
-            kernelSize: 128
-        });
-
-        this.resize();
     }
 
     _initHandler () {
@@ -162,7 +178,9 @@ class ViewMain {
         this._needsUpdate = false;
         var time = Date.now();
         var renderStat = this._renderer.render(this._scene, this._camera);
-        this._ssaoPass.render(this._renderer, this._scene, this._camera);
+        if (this.enableSsao) {
+            this._ssaoPass.render(this._renderer, this._scene, this._camera);
+        }
         renderStat.renderTime = Date.now() - time;
 
         this.trigger('render', renderStat);

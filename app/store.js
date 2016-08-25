@@ -66,13 +66,15 @@ var store = {
 
     textureRootPath: 'http://localhost/baidu-screen/asset/texture/zhanqu/',
 
+    useFreeCamera: false,
+
+    enableSsao: true,
+
     renderStat: {
         renderTime: 0,
         vertexCount: 0,
         drawCallCount: 0
     },
-
-    useFreeCamera: false,
 
     currentCamera: {
         position: null,
@@ -80,7 +82,7 @@ var store = {
     },
 
     ssao: {
-        radius: new RangeType('radius', 'Radius', 0.5, 0, 5, 0.01),
+        radius: new RangeType('radius', 'Radius', 0.5, 0, 2, 0.005),
         kernelSize: new RangeType('kernelSize', 'Kernel Size', 64, 0, 256, 1),
         blurSize: new RangeType('blurSize', 'Blur Size', 4, 0, 10, 1),
         power: new RangeType('power', 'Power', 0.2, 0, 5, 0.01)
