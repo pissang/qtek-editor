@@ -16,6 +16,17 @@ html, body {
         float: left;
         width: 60%;
 
+        display: flex;
+        flex-direction: column;
+
+        .top {
+            flex-grow: 1;
+            display: flex;
+        }
+
+        .bottom {
+            height: 2%;
+        }
     }
 
     .right {
@@ -26,7 +37,9 @@ html, body {
 
 #view {
     position: relative;
-    height: 100%;
+    // http://stackoverflow.com/questions/15381172/css-flexbox-child-height-100
+    // http://stackoverflow.com/questions/35532987/heights-rendering-differently-in-chrome-and-firefox/35537510#35537510
+    flex-grow: 1;
 
     .toolbar {
         position: absolute;

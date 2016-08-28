@@ -1,5 +1,8 @@
 <template>
-<input type="color" v-model="value">
+<div>
+    <input type="color" v-model="value">
+    <input type="text" v-model="value" lazy>
+</div>
 </template>
 
 <script>

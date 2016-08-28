@@ -9,33 +9,31 @@ export default {
         return store;
     },
 
-    computed () {
-        return {
-            camera: function () {
-                var pos = this._viewMain.camera.position;
-                return ;
-            }
-        }
-    },
-
     ready () {
         var viewRoot = this.$el.querySelector('.view-main');
         var viewMain = this._viewMain = new ViewMain(viewRoot);
+        var self = this;
 
         var modelRootNode;
         // TODO
         viewMain.loadModel('http://' + window.location.host + '/baidu-screen/asset/baiduworld/zhanqu.json')
             .then(function (rootNode) {
-                viewMain.loadPanorama('http://' + window.location.host + '/baidu-screen/asset/texture/tents_con.hdr', 1.5);
+                viewMain.loadPanorama('http://' + window.location.host + '/baidu-screen/asset/texture/hall.hdr', 1.5);
                 rootNode.rotation.rotateX(-Math.PI / 2);
 
                 viewMain.focusOn(rootNode);
 
-                modelRootNode = rootNode;
+                self._rootNode = modelRootNode = rootNode;
+
+                setInterval(saveLocal, 5000);
 
                 loadLocal();
 
-                setInterval(saveLocal, 5000);
+                viewMain.loadCameraAnimation('http://' + window.location.host + '/baidu-screen/asset/baiduworld/animation.json')
+                    .then(function (clips) {
+                        self._clip = clips[Object.keys(clips)[0]];
+                    });
+
             });
 
         window.addEventListener('resize', function () { viewMain.resize(); });
@@ -148,9 +146,13 @@ export default {
 
         function parseColor(color) {
             if (typeof color === 'string') {
-                return colorUtil.parse(color).slice(0, 3).map(function (channel) {
-                    return channel / 255;
-                });
+                var result = colorUtil.parse(color);
+                if (result) {
+                    return result.slice(0, 3).map(function (channel) {
+                        return channel / 255;
+                    });
+                }
+                return [0, 0, 0];
             }
             return color || [0, 0, 0];
         }
@@ -253,9 +255,9 @@ export default {
 
     methods: {
         focusCurrent: function () {
-            if (this._currentMesh) {
-                this._viewMain.focusOn(this._currentMesh);
-            }
+            this._viewMain.focusOn(
+                this._currentMesh || this._rootNode
+            );
         },
 
         load: function () {
@@ -278,6 +280,10 @@ export default {
 
         download: function () {
             this._saveLocal();
+        },
+
+        playAnimation: function () {
+            this._viewMain.playCameraAnimation(this._clip);
         }
     }
 };

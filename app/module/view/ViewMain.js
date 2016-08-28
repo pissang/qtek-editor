@@ -1,7 +1,11 @@
 import qtek from 'qtek';
 import SSAOPass from './SSAOPass';
 
+import GlowCompositor from './GlowCompositor';
+import EdgePass from './EdgePass';
+
 qtek.Shader['import'](require('text!./standardExt.essl'));
+qtek.Shader['import'](require('text!./tron.essl'));
 
 qtek.shader.library.template(
     'buildin.standardExt',
@@ -16,8 +20,8 @@ class ViewMain {
 
 
         var renderer = new qtek.Renderer({
-            canvas: document.createElement('canvas'),
-            devicePixelRatio: 1
+            canvas: document.createElement('canvas')
+            // devicePixelRatio: 1
         });
 
         var camera = new qtek.camera.Perspective();
@@ -51,7 +55,12 @@ class ViewMain {
             kernelSize: 128
         });
 
+        // this.tronLike = true;
+
+        this._edgePass = new EdgePass();
+
         this.resize();
+
     }
 
     _initScene () {
@@ -65,11 +74,18 @@ class ViewMain {
         scene.add(sunLight);
 
         var fillLight = new qtek.light.Directional({
-            intensity: 0.5
+            intensity: 0.3
         });
         fillLight.position.set(-10, 10, -10);
         fillLight.lookAt(scene.position);
         scene.add(fillLight);
+
+        var fillLight2 = new qtek.light.Directional({
+            intensity: 0.2
+        });
+        fillLight2.position.set(-10, 10, 10);
+        fillLight2.lookAt(scene.position);
+        scene.add(fillLight2);
 
         var ambientLight = new qtek.light.Ambient({
             intensity: 0.3
@@ -84,7 +100,7 @@ class ViewMain {
             target: this._camera,
             domElement: this._dom,
             animation: this._animation,
-            speed: 0.2
+            speed: 0.1
         });
         firstPersonControl.disable();
         firstPersonControl.on('change', function () {
@@ -177,9 +193,17 @@ class ViewMain {
     renderImmediately () {
         this._needsUpdate = false;
         var time = Date.now();
-        var renderStat = this._renderer.render(this._scene, this._camera);
-        if (this.enableSsao) {
-            this._ssaoPass.render(this._renderer, this._scene, this._camera);
+
+        var renderStat = {};
+        if (this.tronLike) {
+            this._edgePass.render(this._renderer, this._scene, this._camera);
+            // renderStat = this._renderer.render(this._scene, this._camera);
+        }
+        else {
+            renderStat = this._renderer.render(this._scene, this._camera);
+            if (this.enableSsao) {
+                this._ssaoPass.render(this._renderer, this._scene, this._camera);
+            }
         }
         renderStat.renderTime = Date.now() - time;
 
@@ -193,6 +217,7 @@ class ViewMain {
         this._camera.aspect = this._renderer.getViewportAspect();
 
         this._ssaoPass.resize(width, height);
+        this._edgePass.resize(width, height);
     }
 
     loadModel (url) {
@@ -207,12 +232,53 @@ class ViewMain {
         return new Promise(function (resolve, reject) {
             loader.load(url);
             loader.success(function () {
+                rootNode.traverse(function (mesh) {
+                    var geometry = mesh.geometry;
+                    if (geometry) {
+                        // generateUv(geometry);
+                    }
+                });
+
                 resolve(rootNode);
                 self.render();
             }).error(function () {
                 reject();
             });
         });
+    }
+
+    loadCameraAnimation (url) {
+        var loader = new qtek.loader.GLTF();
+        var self = this;
+        return new Promise(function (resolve, reject) {
+            loader.load(url);
+            loader.success(function (result) {
+                self.render();
+                resolve(result.clips);
+            }).error(function () {
+                reject();
+            });
+        });
+    }
+
+    playCameraAnimation (clip) {
+        if (this._currentClip) {
+            this._animation.removeClip(this._currentClip);
+        }
+        var camera = this._camera;
+        var self = this;
+        clip.restart();
+        clip.onframe = function () {
+            camera.position.setArray(this.position);
+            camera.rotation.setArray(this.rotation);
+            // FIXME Why rotateY ?
+            camera.rotation.rotateY(-Math.PI / 2);
+            camera.scale.setArray(this.scale);
+            self.render();
+        };
+        this._animation.addClip(clip);
+
+        this._currentClip = clip;
     }
 
     focusOn (node) {

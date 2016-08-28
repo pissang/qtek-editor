@@ -4,7 +4,11 @@
         <scene></scene>
     </div>
     <div class="center">
-        <view></view>
+        <div class="top">
+            <view></view>
+        </div>
+        <div class="bottom">
+        </div>
     </div>
     <div class="right">
         <inspector></inspector>
@@ -25,6 +29,7 @@ export default {
         'view': View,
         'inspector': Inspector,
         'scene': Scene
+        // 'timeline': Timeline
     }
 };
 </script>
