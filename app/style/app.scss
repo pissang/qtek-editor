@@ -6,6 +6,7 @@ html, body {
 
 #app, .left, .center, .right {
     height: 100%;
+    overflow-y: auto;
 
     .left {
         float: left;

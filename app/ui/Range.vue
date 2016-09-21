@@ -1,5 +1,8 @@
 <template>
-<input type="range" :step="option.step" :min="option.min" :max="option.max" v-model="value">
+<div class="property-range">
+    <input type="range" :step="option.step" :min="option.min" :max="option.max" v-model="value">
+    <input class="property-range-text" type="text" v-model="value" lazy>
+</div>
 </template>
 
 <script>
@@ -24,5 +27,7 @@ module.exports = {
 </script>
 
 <style>
-
+.property-range-text {
+    width: 40px;
+}
 </style>

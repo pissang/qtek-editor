@@ -16,23 +16,41 @@ export default {
 
         var modelRootNode;
         // TODO
-        viewMain.loadModel('http://' + window.location.host + '/baidu-screen/asset/baiduworld/zhanqu.json')
+        // viewMain.loadModel('http://' + window.location.host + '/baidu-screen/asset/baiduworld/zhanqu-simple2.gltf')
+        //     .then(function (rootNode) {
+        //         viewMain.loadPanorama('http://' + window.location.host + '/baidu-screen/asset/texture/hall.hdr', -2);
+        //         rootNode.rotation.rotateX(-Math.PI / 2);
+
+        //         viewMain.focusOn(rootNode);
+
+        //         self._rootNode = modelRootNode = rootNode;
+
+        //         setInterval(saveLocal, 5000);
+
+        //         loadLocal();
+
+        //         viewMain.loadCameraAnimation('http://' + window.location.host + '/baidu-screen/asset/baiduworld/animation.json')
+        //             .then(function (clips) {
+        //                 self._clip = clips[Object.keys(clips)[0]];
+        //             });
+
+        //     });
+
+        // viewMain.loadModel('asset/model/bmps/bmps.gltf')
+        // viewMain.loadModel('asset/model/tronCycle/tronCycle.gltf')
+        viewMain.loadModel('asset/model/kitchen/kitchen.gltf')
             .then(function (rootNode) {
-                viewMain.loadPanorama('http://' + window.location.host + '/baidu-screen/asset/texture/hall.hdr', 1.5);
-                rootNode.rotation.rotateX(-Math.PI / 2);
-
+                viewMain.loadPanorama('http://' + window.location.host + '/baidu-screen/asset/texture/hall.hdr', -1);
                 viewMain.focusOn(rootNode);
-
-                self._rootNode = modelRootNode = rootNode;
+                rootNode.rotation.rotateX(-Math.PI / 2);
 
                 setInterval(saveLocal, 5000);
 
-                loadLocal();
+                self._rootNode = modelRootNode = rootNode;
 
-                viewMain.loadCameraAnimation('http://' + window.location.host + '/baidu-screen/asset/baiduworld/animation.json')
-                    .then(function (clips) {
-                        self._clip = clips[Object.keys(clips)[0]];
-                    });
+                viewMain.focusOn(rootNode);
+
+                loadLocal();
 
             });
 
@@ -53,18 +71,20 @@ export default {
             return obj;
         }, {});
 
-        var simpleProperties = ['color', 'specularColor', 'glossiness', 'alpha', 'emission'];
-        var textureProperies = ['diffuseMap', 'specularMap', 'normalMap'];
+        var simpleProperties = ['color', 'glossiness', 'alpha', 'metalness', 'emission', 'emissionIntensity'];
+        var textureProperies = ['diffuseMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap'];
 
         function inspectMaterial(mesh) {
             var material = mesh.material;
             inspectorMaterialMap.materialId.value = material.name;
-            inspectorMaterialMap.color.value = stringifyColor(material.get('color'));
-            inspectorMaterialMap.specularColor.value = stringifyColor(material.get('specularColor'));
-            inspectorMaterialMap.emission.value = stringifyColor(material.get('emission'));
 
-            inspectorMaterialMap.glossiness.value = material.get('glossiness');
-            inspectorMaterialMap.alpha.value = material.get('alpha');
+            simpleProperties.forEach(function (prop) {
+                var val = material.get(prop);
+                if (inspectorMaterialMap[prop].type === 'color') {
+                    val = stringifyColor(val);
+                }
+                inspectorMaterialMap[prop].value = val;
+            });
 
             textureProperies.forEach(function (name) {
                 var texture = material.get(name);
@@ -76,6 +96,12 @@ export default {
                     inspectorMaterialMap[name].value = '';
                 }
             });
+
+            var uvRepeat = material.get('uvRepeat');
+            if (uvRepeat) {
+                inspectorMaterialMap.uvRepeat0.value = uvRepeat[0];
+                inspectorMaterialMap.uvRepeat1.value = uvRepeat[1];
+            }
 
             this._currentMesh = mesh;
         }
@@ -99,11 +125,15 @@ export default {
             });
             viewMain.updateShader(enabledTextures, mat);
 
-            mat.set('color', parseColor(config.color));
-            mat.set('specularColor', parseColor(config.specularColor));
-            mat.set('emission', parseColor(config.emission));
-            mat.set('glossiness', config.glossiness);
-            mat.set('alpha', config.alpha);
+            simpleProperties.forEach(function (prop) {
+                var val = config[prop];
+                if (inspectorMaterialMap[prop].type === 'color') {
+                    val = parseColor(val);
+                }
+                if (val != null) {
+                    mat.set(prop, val);
+                }
+            });
 
             var isTransparent = config.alpha < 1;
             mat.transparent = isTransparent;
@@ -112,7 +142,11 @@ export default {
             textureProperies.forEach(function (name) {
                 var textureFileName = config[name];
                 if (textureFileName) {
-                    var texture = mat.get(name) || new qtek.Texture2D();
+                    var texture = mat.get(name) || new qtek.Texture2D({
+                        wrapS: qtek.Texture.REPEAT,
+                        wrapT: qtek.Texture.REPEAT,
+                        anisotropic: 32
+                    });
                     var path = store.textureRootPath + '/' + textureFileName;
                     if (texture && texture.image && texture.image.src === path) {
                         return;
@@ -128,6 +162,7 @@ export default {
                 }
             });
 
+            mat.set('uvRepeat', [config.uvRepeat0 || 1, config.uvRepeat1 || 1]);
         }
 
         function stringifyColor(colorArr) {
@@ -173,6 +208,11 @@ export default {
                                 materialMap[material.name][propName] = tex.image.src.split('/').pop();
                             }
                         });
+                        var uvRepeat = material.get('uvRepeat');
+                        if (uvRepeat) {
+                            materialMap[material.name].uvRepeat0 = uvRepeat[0];
+                            materialMap[material.name].uvRepeat1 = uvRepeat[1];
+                        }
                     }
                 });
             }
@@ -180,9 +220,14 @@ export default {
             for (var name in store.ssao) {
                 ssao[name] = store.ssao[name].value;
             }
+            var ssr = {};
+            for (var name in store.ssr) {
+                ssr[name] = store.ssr[name].value;
+            }
 
             window.localStorage.setItem('qtek-editor-draft', JSON.stringify({
                 ssao: ssao,
+                ssr: ssr,
                 materials: materialMap,
                 currentCamera: {
                     position: store.currentCamera.position,
@@ -211,6 +256,11 @@ export default {
                     store.ssao[name].value = config.ssao[name];
                 }
             }
+            for (var name in config.ssr) {
+                if (store.ssr[name]) {
+                    store.ssr[name].value = config.ssr[name];
+                }
+            }
 
             if (config.currentCamera) {
                 viewMain.setCameraPositionAndRotation(
@@ -228,8 +278,15 @@ export default {
             }
             viewMain.render();
         }
+        function updateSsrParameter() {
+            for (var name in store.ssr) {
+                viewMain.setSsrParameter(name, store.ssr[name].value);
+            }
+            viewMain.render();
+        }
 
         this.$watch('ssao', updateSsaoParameter, { deep: true });
+        this.$watch('ssr', updateSsrParameter, { deep: true });
 
         updateSsaoParameter();
 
@@ -242,8 +299,9 @@ export default {
             viewMain.switchFreeCamera(this.useFreeCamera);
         });
 
-        this.$watch('enableSsao', function () {
+        this.$watch('enableSsao + enableSsr', function () {
             viewMain.enableSsao = this.enableSsao;
+            viewMain.enableSsr = this.enableSsr;
             viewMain.render();
         });
 

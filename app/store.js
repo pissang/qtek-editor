@@ -64,11 +64,14 @@ function NumberType(name, title, val, step) {
 
 var store = {
 
-    textureRootPath: 'http://localhost/baidu-screen/asset/texture/zhanqu/',
+    // textureRootPath: 'http://localhost/baidu-screen/asset/texture/zhanqu2/',
+    textureRootPath: 'http://localhost/qtek-editor/asset/model/kitchen',
 
     useFreeCamera: false,
 
     enableSsao: true,
+
+    enableSsr: true,
 
     renderStat: {
         renderTime: 0,
@@ -88,20 +91,38 @@ var store = {
         power: new RangeType('power', 'Power', 0.2, 0, 5, 0.01)
     },
 
+    ssr: {
+        maxIteration: new RangeType('maxIteration', 'Max Iteration', 32, 1, 256, 1),
+        maxBinaryIteration: new RangeType('maxBinaryIteration', 'Max BinaryIteration', 5, 0, 64, 1),
+        maxRayDistance: new RangeType('maxRayDistance', 'Max Ray Distance', 10, 0, 50),
+        pixelStride: new RangeType('pixelStride', 'Pixel Stride', 16, 1, 50, 1),
+        pixelStrideZCutoff: new RangeType('pixelStrideZCutoff', 'Pixel Stride Z Cutoff', 50, 1, 1000, 1),
+        eyeFadeStart: new RangeType('eyeFadeStart', 'Eye Fade Start', 0.5, 0, 1),
+        eyeFadeEnd: new RangeType('eyeFadeEnd', 'Eye Fade End', 1, 0, 1),
+        minGlossiness: new RangeType('minGlossiness', 'Min Glossiness', 0.4, 0, 1),
+        zThicknessThreshold: new RangeType('zThicknessThreshold', 'Z Thickness Threshold', 0.1, 0, 2)
+    },
+
     inspectorMaterial: [
         new StringType('materialId', 'Material ID'),
 
         new ColorType('color', 'Base Color', '#fff'),
-        new ColorType('specularColor', 'Specular Color', '#222'),
+        new RangeType('metalness', 'Metalness', 0, 0, 1),
         new RangeType('glossiness', 'Glossiness', 0, 0, 1),
 
         new RangeType('alpha', 'Alpha', 0, 0, 1),
 
         new ColorType('emission', 'Emission', '#000'),
+        new RangeType('emissionIntensity', 'Emission Intensity', 0, 0, 50),
+
+        new NumberType('uvRepeat0', 'U Repeat', 1),
+        new NumberType('uvRepeat1', 'V Repeat', 1),
 
         new TextureType('diffuseMap', 'Diffuse Map'),
         new TextureType('normalMap', 'Normal Map'),
-        new TextureType('specularMap', 'Specular Map')
+        new TextureType('roughnessMap', 'Roughness Map'),
+        new TextureType('metalnessMap', 'Metalness Map'),
+        new TextureType('emissiveMap', 'Emissive Map')
 
         // new TextureType('environmentMap', 'Environment Map')
     ]

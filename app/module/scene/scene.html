@@ -12,4 +12,18 @@
             </div>
         </div>
     </div>
+
+    <div id="ssr">
+        <h5>SSR</h5>
+        <div class="rows">
+            <div class="row">
+                <label>是否启用</label>
+                <input type="checkbox" v-model="enableSsr" />
+            </div>
+            <div class="row" v-for="(index, item) in ssr">
+                <label>{{item.title}}</label>
+                <component :is="item.type" :value.sync="item.value" :option="item"></component>
+            </div>
+        </div>
+    </div>
 </div>

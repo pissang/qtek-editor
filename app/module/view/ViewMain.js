@@ -1,27 +1,23 @@
 import qtek from 'qtek';
+import GBuffer from './GBuffer';
 import SSAOPass from './SSAOPass';
+import SSRPass from './SSRPass';
 
-import GlowCompositor from './GlowCompositor';
 import EdgePass from './EdgePass';
 
-qtek.Shader['import'](require('text!./standardExt.essl'));
 qtek.Shader['import'](require('text!./tron.essl'));
 
-qtek.shader.library.template(
-    'buildin.standardExt',
-    qtek.Shader.source('buildin.standardExt.vertex'),
-    qtek.Shader.source('buildin.standardExt.fragment')
-);
-
+var hdrJson = JSON.parse(require('text!./hdr.json'));
 
 class ViewMain {
     constructor(dom) {
         this.enableSsao = true;
-
+        this.enableSsr = true;
 
         var renderer = new qtek.Renderer({
-            canvas: document.createElement('canvas')
-            // devicePixelRatio: 1
+            canvas: document.createElement('canvas'),
+            devicePixelRatio: 1,
+            color: [1.0, 1.0, 1.0, 0.2]
         });
 
         var camera = new qtek.camera.Perspective();
@@ -50,42 +46,56 @@ class ViewMain {
 
         this._initHandler();
 
+        this._gBuffer = new GBuffer();
+
         this._ssaoPass = new SSAOPass({
             radius: 0.5,
-            kernelSize: 128
+            kernelSize: 128,
+            gBuffer: this._gBuffer
+        });
+        this._ssrPass = new SSRPass({
+            gBuffer: this._gBuffer,
+            renderToTexture: true,
+            RGBM: true
         });
 
-        // this.tronLike = true;
+        this._colorFb = new qtek.FrameBuffer();
+        this._colorTex = new qtek.Texture2D();
 
-        this._edgePass = new EdgePass();
+        this._shadowMapPass = new qtek.prePass.ShadowMap();
+
+        var fx = new qtek.loader.FX();
+
+        this._compositor = fx.parse(hdrJson);
+        this._sourceNode = this._compositor.getNodeByName('source');
+
+        this._debugPass = new qtek.compositor.Pass({
+            fragment: qtek.Shader.source('qtek.compositor.output')
+        });
 
         this.resize();
-
     }
 
     _initScene () {
         var scene = this._scene;
 
-        var sunLight = new qtek.light.Directional({
-            intensity: 0.8
+        var mainLight = new qtek.light.Directional({
+            intensity: 10.0,
+            castShadow: true,
+            shadowBias: 0.002,
+            shadowResolution: 2048
         });
-        sunLight.position.set(10, 10, 10);
-        sunLight.lookAt(scene.position);
-        scene.add(sunLight);
+        mainLight.position.set(-5, 10, -20);
+        mainLight.lookAt(scene.position);
+        scene.add(mainLight);
 
         var fillLight = new qtek.light.Directional({
-            intensity: 0.3
+            intensity: 0.4,
+            castShadow: false
         });
-        fillLight.position.set(-10, 10, -10);
+        fillLight.position.set(10, 10, 10);
         fillLight.lookAt(scene.position);
         scene.add(fillLight);
-
-        var fillLight2 = new qtek.light.Directional({
-            intensity: 0.2
-        });
-        fillLight2.position.set(-10, 10, 10);
-        fillLight2.lookAt(scene.position);
-        scene.add(fillLight2);
 
         var ambientLight = new qtek.light.Ambient({
             intensity: 0.3
@@ -135,11 +145,11 @@ class ViewMain {
         var lastSelected = null;
 
         function select(mesh) {
-            mesh.material.set('selectMix', 0.2);
+            mesh.material.set('mixIntensity', 0.2);
             self.render();
         }
         function unSelect(mesh) {
-            mesh.material.set('selectMix', 0);
+            mesh.material.set('mixIntensity', 0);
             self.render();
         }
 
@@ -155,6 +165,10 @@ class ViewMain {
                 lastSelected = result.target;
 
                 self.trigger('select', result.target);
+            }
+            else if (lastSelected) {
+                unSelect(lastSelected);
+                lastSelected = null;
             }
         });
     }
@@ -195,16 +209,40 @@ class ViewMain {
         var time = Date.now();
 
         var renderStat = {};
-        if (this.tronLike) {
-            this._edgePass.render(this._renderer, this._scene, this._camera);
-            // renderStat = this._renderer.render(this._scene, this._camera);
+        var renderer = this._renderer;
+
+        var scene = this._scene;
+        var camera = this._camera;
+        scene.update(true);
+        camera.update(true);
+        this._gBuffer.update(renderer, scene, camera);
+        if (this.enableSsao) {
+            this._ssaoPass.render(renderer, camera);
         }
         else {
-            renderStat = this._renderer.render(this._scene, this._camera);
-            if (this.enableSsao) {
-                this._ssaoPass.render(this._renderer, this._scene, this._camera);
-            }
+            this._ssaoPass.clear(renderer);
         }
+        this._shadowMapPass.render(renderer, scene, camera);
+        this._colorFb.attach(renderer.gl, this._colorTex);
+        this._colorFb.bind(renderer);
+        renderer.render(scene, camera, true, true);
+        this._colorFb.unbind(renderer);
+
+        this._gBuffer.update(renderer, scene, camera);
+        if (this.enableSsr) {
+            this._ssrPass.render(renderer, camera, this._colorTex, this._ssaoPass.getTargetTexture());
+            this._sourceNode.texture = this._ssrPass.getTargetTexture();
+        }
+        else {
+            this._sourceNode.texture = this._colorTex;
+        }
+
+        this._compositor.render(renderer);
+
+        this._shadowMapPass.renderDebug(renderer);
+        // this._debugPass.setUniform('texture', this._ssrPass.getTargetTexture());
+        // this._debugPass.render(renderer);
+
         renderStat.renderTime = Date.now() - time;
 
         this.trigger('render', renderStat);
@@ -216,15 +254,18 @@ class ViewMain {
         this._renderer.resize(width, height);
         this._camera.aspect = this._renderer.getViewportAspect();
 
-        this._ssaoPass.resize(width, height);
-        this._edgePass.resize(width, height);
+        this._colorTex.width = width;
+        this._colorTex.height = height;
+        this._colorTex.dirty();
+
+        this.render();
     }
 
     loadModel (url) {
         var rootNode = new qtek.Node();
         var loader = new qtek.loader.GLTF({
             rootNode: rootNode,
-            shaderName: 'buildin.standardExt'
+            shaderName: 'qtek.standard'
         });
         var self = this;
         this._scene.add(rootNode);
@@ -235,6 +276,15 @@ class ViewMain {
                 rootNode.traverse(function (mesh) {
                     var geometry = mesh.geometry;
                     if (geometry) {
+                        mesh.beforeRender = function () {
+                            var viewSize = mesh.material.get('viewportSize') || [];
+                            viewSize[0] = self._renderer.getWidth();
+                            viewSize[1] = self._renderer.getHeight();
+                            mesh.material.set('viewportSize', viewSize);
+                        };
+                        if (geometry.attributes.texcoord0.value) {
+                            geometry.generateTangents();
+                        }
                         // generateUv(geometry);
                     }
                 });
@@ -344,13 +394,15 @@ class ViewMain {
 
     setEnvMap (envMap) {
         var result = this.prefilterEnvMap(envMap);
+        var self = this;
         this._rootNode.traverse(function (node) {
             if (node.material) {
                 node.material.shader.enableTexture('environmentMap');
                 node.material.shader.enableTexture('brdfLookup');
-                node.material.shader.define('fragment', 'ENVIRONMENTMAP_PREFILTER');
+                node.material.shader.enableTexture('ssaoMap');
                 node.material.set('environmentMap', result.environmentMap);
                 node.material.set('brdfLookup', result.brdfLookup);
+                node.material.set('ssaoMap', self._ssaoPass.getTargetTexture());
             }
         });
 
@@ -358,11 +410,15 @@ class ViewMain {
     }
 
     updateShader (enabledTextures, material) {
-        enabledTextures = enabledTextures.concat(['environmentMap']);
-        var shader = qtek.shader.library.get('buildin.standardExt', {
+        enabledTextures = enabledTextures.concat(['environmentMap', 'brdfLookup', 'ssaoMap']);
+        // enabledTextures = enabledTextures.concat(['ssaoMap']);
+        var shader = qtek.shader.library.get('qtek.standard', {
             textures: enabledTextures,
             fragmentDefines: {
-                ENVIRONMENTMAP_PREFILTER: null
+                ENVIRONMENTMAP_PREFILTER: null,
+                RGBM_ENCODE: null,
+                USE_METALNESS: null,
+                SRGB_DECODE: null
             }
         });
         if (shader !== material.shader) {
@@ -380,12 +436,22 @@ class ViewMain {
         this._ssaoPass.setParameter(name, value);
     }
 
+    setSsrParameter (name, value) {
+        if (typeof name === 'object') {
+            for (var key in name) {
+                this._ssrPass.setParameter(key, name[key]);
+            }
+            return;
+        }
+        this._ssrPass.setParameter(name, value);
+    }
+
     prefilterEnvMap (envMap) {
         return qtek.util.cubemap.prefilterEnvironmentMap(
             this._renderer, envMap, {
                 width: 128,
-                height: 128,
-                type: qtek.Texture.UNSIGNED_BYTE
+                height: 128
+                // type: qtek.Texture.UNSIGNED_BYTE
             }
         );
     }
