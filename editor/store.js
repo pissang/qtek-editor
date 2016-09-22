@@ -65,7 +65,7 @@ function NumberType(name, title, val, step) {
 var store = {
 
     // textureRootPath: 'http://localhost/baidu-screen/asset/texture/zhanqu2/',
-    textureRootPath: 'http://localhost/qtek-editor/asset/model/kitchen',
+    textureRootPath: window.location.origin + '/qtek-editor/asset/model/kitchen',
 
     useFreeCamera: false,
 

@@ -1,7 +1,8 @@
 var path = require('path');
 module.exports = {
     entry: {
-        'index': path.resolve(__dirname, 'app/index.js')
+        'editor': path.resolve(__dirname, 'editor/index.js'),
+        'viewer': path.resolve(__dirname, 'viewer/index.js')
     },
     module: {
         loaders: [{
@@ -10,7 +11,11 @@ module.exports = {
         },
         {
             test: /\.js$/,
-            include: [path.resolve(__dirname, 'app')],
+            include: [
+                path.resolve(__dirname, 'editor'),
+                path.resolve(__dirname, 'common'),
+                path.resolve(__dirname, 'viewer')
+            ],
             loader: 'babel'
         }]
     },

@@ -8,7 +8,7 @@ function SSRPass(opt) {
     this._gBuffer = opt.gBuffer;
 
     // FXIME Why ssr needs to clear color buffer
-    this._ssrPass = new PostProcessPass(qtek.Shader.source('ssr.fragment'), true, true);
+    this._ssrPass = new PostProcessPass(qtek.Shader.source('ssr.fragment'), true, [0, 0, 0, 0]);
     this._blurPass1 = new PostProcessPass(qtek.Shader.source('ssr.blur_h'), true);
     this._blurPass2 = new PostProcessPass(qtek.Shader.source('ssr.blur_v'), true);
 

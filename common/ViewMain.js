@@ -1,16 +1,14 @@
 import qtek from 'qtek';
-import GBuffer from './GBuffer';
-import SSAOPass from './SSAOPass';
-import SSRPass from './SSRPass';
+import GBuffer from './graphic/GBuffer';
+import SSAOPass from './graphic/SSAOPass';
+import SSRPass from './graphic/SSRPass';
 
-import EdgePass from './EdgePass';
-
-qtek.Shader['import'](require('text!./tron.essl'));
-
-var hdrJson = JSON.parse(require('text!./hdr.json'));
+var hdrJson = JSON.parse(require('text!./graphic/hdr.json'));
 
 class ViewMain {
-    constructor(dom) {
+    constructor(dom, option) {
+        option = option || {};
+
         this.enableSsao = true;
         this.enableSsr = true;
 
@@ -44,7 +42,7 @@ class ViewMain {
 
         this._initControl();
 
-        this._initHandler();
+        option.enablePicking && this._initPickingHandler();
 
         this._gBuffer = new GBuffer();
 
@@ -62,7 +60,9 @@ class ViewMain {
         this._colorFb = new qtek.FrameBuffer();
         this._colorTex = new qtek.Texture2D();
 
-        this._shadowMapPass = new qtek.prePass.ShadowMap();
+        this._shadowMapPass = new qtek.prePass.ShadowMap({
+            // softShadow: qtek.prePass.ShadowMap.VSM
+        });
 
         var fx = new qtek.loader.FX();
 
@@ -80,12 +80,13 @@ class ViewMain {
         var scene = this._scene;
 
         var mainLight = new qtek.light.Directional({
-            intensity: 10.0,
+            intensity: 40.0,
             castShadow: true,
-            shadowBias: 0.002,
-            shadowResolution: 2048
+            shadowBias: 0.005,
+            shadowResolution: 2048,
+            color: [250 / 255, 214 / 255, 165 / 255]
         });
-        mainLight.position.set(-5, 10, -20);
+        mainLight.position.set(-5, 7, -20);
         mainLight.lookAt(scene.position);
         scene.add(mainLight);
 
@@ -110,7 +111,7 @@ class ViewMain {
             target: this._camera,
             domElement: this._dom,
             animation: this._animation,
-            speed: 0.1
+            speed: 0.02
         });
         firstPersonControl.disable();
         firstPersonControl.on('change', function () {
@@ -132,7 +133,7 @@ class ViewMain {
 
     }
 
-    _initHandler () {
+    _initPickingHandler () {
         var picking = new qtek.picking.RayPicking({
             scene: this._scene,
             camera: this._camera,
@@ -228,7 +229,6 @@ class ViewMain {
         renderer.render(scene, camera, true, true);
         this._colorFb.unbind(renderer);
 
-        this._gBuffer.update(renderer, scene, camera);
         if (this.enableSsr) {
             this._ssrPass.render(renderer, camera, this._colorTex, this._ssaoPass.getTargetTexture());
             this._sourceNode.texture = this._ssrPass.getTargetTexture();
@@ -239,8 +239,8 @@ class ViewMain {
 
         this._compositor.render(renderer);
 
-        this._shadowMapPass.renderDebug(renderer);
-        // this._debugPass.setUniform('texture', this._ssrPass.getTargetTexture());
+        // this._shadowMapPass.renderDebug(renderer);
+        // this._debugPass.setUniform('texture', this._ssrPass._ssrPass.getTargetTexture());
         // this._debugPass.render(renderer);
 
         renderStat.renderTime = Date.now() - time;
@@ -295,6 +295,10 @@ class ViewMain {
                 reject();
             });
         });
+    }
+
+    getRootNode () {
+        return this._rootNode;
     }
 
     loadCameraAnimation (url) {
@@ -390,6 +394,20 @@ class ViewMain {
         // skydome.material.set('diffuseMap', envMap);
 
         this.render();
+    }
+
+    shotEnvMap () {
+        var textureCube = new qtek.TextureCube({
+            width: 128,
+            height: 128
+        });
+        var envMapPass = new qtek.prePass.EnvironmentMap({
+            shadowMapPass: this._shadowMapPass,
+            texture: textureCube
+        });
+        envMapPass.render(this._renderer, this._scene);
+
+        this.setEnvMap(textureCube);
     }
 
     setEnvMap (envMap) {

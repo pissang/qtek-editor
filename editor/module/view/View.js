@@ -1,4 +1,4 @@
-import ViewMain from './ViewMain';
+import ViewMain from '../../../common/ViewMain';
 import store from '../../store';
 import qtek from 'qtek';
 import colorUtil from 'zrender/lib/tool/color';
@@ -11,7 +11,9 @@ export default {
 
     ready () {
         var viewRoot = this.$el.querySelector('.view-main');
-        var viewMain = this._viewMain = new ViewMain(viewRoot);
+        var viewMain = this._viewMain = new ViewMain(viewRoot, {
+            enablePicking: true
+        });
         var self = this;
 
         var modelRootNode;
@@ -41,7 +43,6 @@ export default {
         viewMain.loadModel('asset/model/kitchen/kitchen.gltf')
             .then(function (rootNode) {
                 viewMain.loadPanorama('http://' + window.location.host + '/baidu-screen/asset/texture/hall.hdr', -1);
-                viewMain.focusOn(rootNode);
                 rootNode.rotation.rotateX(-Math.PI / 2);
 
                 setInterval(saveLocal, 5000);
@@ -52,6 +53,7 @@ export default {
 
                 loadLocal();
 
+                // viewMain.shotEnvMap();
             });
 
         window.addEventListener('resize', function () { viewMain.resize(); });
@@ -162,7 +164,7 @@ export default {
                 }
             });
 
-            mat.set('uvRepeat', [config.uvRepeat0 || 1, config.uvRepeat1 || 1]);
+            mat.set('uvRepeat', [+config.uvRepeat0 || 1, +config.uvRepeat1 || 1]);
         }
 
         function stringifyColor(colorArr) {
