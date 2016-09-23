@@ -14,7 +14,7 @@ export default {
         var self = this;
         viewMain.loadModel('asset/model/kitchen/kitchen.gltf')
             .then(function (rootNode) {
-                viewMain.loadPanorama('http://' + window.location.host + '/baidu-screen/asset/texture/hall.hdr', -1);
+                viewMain.loadPanorama('http://' + window.location.host + '/baidu-screen/asset/texture/hall.hdr', -0.5);
                 rootNode.rotation.rotateX(-Math.PI / 2);
 
                 $.getJSON('asset/model/kitchen/mat.json').then(function (config) {

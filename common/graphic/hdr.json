@@ -2,7 +2,7 @@
     "meta" : {
         "description": "Bloom from https://cdn2.unrealengine.com/Resources/files/The_Technology_Behind_the_Elemental_Demo_16x9-1248544805.pdf"
     },
-    "type" : "compositor",
+    "type": "compositor",
     "nodes" : [
         {
             "name": "source",
@@ -603,11 +603,30 @@
                     "pin" : "color"
                 }
             },
+            "outputs": {
+                "color" : {
+                    "parameters" : {
+                        "width" : "expr(width)",
+                        "height" : "expr(height)"
+                    }
+                }
+            },
             "parameters": {
                 "viewportSize": "expr( [width, height] )"
             },
             "defines": {
                 "RGBM_DECODE": null
+            }
+        },
+        {
+            "name": "lut",
+            "shader": "#source(qtek.compositor.lut)",
+            "type": "filter",
+            "inputs": {
+                "texture": {
+                    "node": "FXAA",
+                    "pin": "color"
+                }
             }
         }
     ]
