@@ -11,13 +11,32 @@ export default {
         var viewRoot = this.$el.querySelector('.view-main');
         var viewMain = this._viewMain = new ViewMain(viewRoot);
 
-        var self = this;
-        viewMain.loadModel('asset/model/kitchen/kitchen.gltf')
+
+        function playAnimationSequerence(clips) {
+            function randomClipIndex(lastIndex) {
+                return (lastIndex + Math.round(Math.random()) + 1) % clips.length;
+                // var idx;
+                // do {
+                //     idx = Math.round(Math.random() * (clips.length - 1));
+                // } while (idx === lastIndex);
+                // return idx;
+            }
+            function playClip(clipIndex) {
+                var clip = clips[clipIndex];
+                clip.onfinish = function () {
+                    playClip(randomClipIndex(clipIndex));
+                };
+                viewMain.playCameraAnimation(clip);
+            }
+            playClip(1);
+        }
+
+        viewMain.loadModel('asset/model/kitchen/kitchen-mod.gltf')
             .then(function (rootNode) {
                 viewMain.loadPanorama('http://' + window.location.host + '/baidu-screen/asset/texture/hall.hdr', -0.5);
                 rootNode.rotation.rotateX(-Math.PI / 2);
 
-                $.getJSON('asset/model/kitchen/mat.json').then(function (config) {
+                $.getJSON('asset/model/kitchen/mat-mod.json').then(function (config) {
                     rootNode.traverse(function (mesh) {
                         var material = mesh.material;
                         if (material && material.name && config.materials[material.name]) {
@@ -33,11 +52,19 @@ export default {
                     }
 
                     if (config.currentCamera) {
-                        viewMain.setCameraPositionAndRotation(
-                            config.currentCamera.position,
-                            config.currentCamera.rotation
-                        );
+                        viewMain.getCamera().position.setArray(config.currentCamera.position);
+                        viewMain.getCamera().lookAt(qtek.math.Vector3.ZERO);
                     }
+
+                    viewMain.loadCameraAnimation('asset/model/kitchen/camera01-05.gltf')
+                        .then(function (clips) {
+                            var clipsArr = [];
+                            for (var name in clips) {
+                                clipsArr.push(clips[name]);
+                            }
+
+                            playAnimationSequerence(clipsArr);
+                        });
 
                     viewMain.render();
                 });
@@ -73,7 +100,7 @@ export default {
                         wrapT: qtek.Texture.REPEAT,
                         anisotropic: 32
                     });
-                    var path = 'asset/model/kitchen/' + textureFileName;
+                    var path = 'asset/model/kitchen/texture/' + textureFileName;
                     if (texture && texture.image && texture.image.src === path) {
                         return;
                     }
@@ -91,4 +118,4 @@ export default {
             mat.set('uvRepeat', [+config.uvRepeat0 || 1, +config.uvRepeat1 || 1]);
         }
     }
-}
+};

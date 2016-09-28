@@ -65,13 +65,17 @@ function NumberType(name, title, val, step) {
 var store = {
 
     // textureRootPath: 'http://localhost/baidu-screen/asset/texture/zhanqu2/',
-    textureRootPath: window.location.origin + '/qtek-editor/asset/model/kitchen',
+    textureRootPath: window.location.origin + '/qtek-editor/asset/model/kitchen/texture/',
 
     useFreeCamera: false,
 
     enableSsao: true,
 
     enableSsr: true,
+
+    currentClip: 0,
+
+    clips: [],
 
     renderStat: {
         renderTime: 0,
@@ -87,8 +91,10 @@ var store = {
     ssao: {
         radius: new RangeType('radius', 'Radius', 0.5, 0, 2, 0.005),
         kernelSize: new RangeType('kernelSize', 'Kernel Size', 64, 0, 256, 1),
-        blurSize: new RangeType('blurSize', 'Blur Size', 4, 0, 10, 1),
-        power: new RangeType('power', 'Power', 0.2, 0, 5, 0.01)
+        power: new RangeType('power', 'Power', 0.2, -5, 5, 0.01),
+        scale: new RangeType('scale', 'Scale', 0.5, 0, 5, 0.01),
+        bias: new RangeType('bias', 'Bias', 5e-4, 1e-4, 2e-3),
+        epsilon: new RangeType('epsilon', 'Epsilon', 0.1, 1e-3, 0.2)
     },
 
     ssr: {

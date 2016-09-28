@@ -13,6 +13,10 @@ function PostProcessPass(shader, renderToTarget, clearColor) {
 PostProcessPass.prototype.setUniform = function (key, val) {
     this._pass.setUniform(key, val);
 };
+PostProcessPass.prototype.getUniform = function (key) {
+    return this._pass.getUniform(key);
+};
+
 PostProcessPass.prototype.render = function (renderer) {
     if (this._frameBuffer) {
         this._frameBuffer.attach(renderer.gl, this._targetTexture);
@@ -31,6 +35,18 @@ PostProcessPass.prototype.getTargetTexture = function () {
 };
 PostProcessPass.prototype.getShader = function () {
     return this._pass.material.shader;
+};
+
+PostProcessPass.prototype.clear = function (renderer) {
+    if (this._frameBuffer) {
+        this._frameBuffer.attach(renderer.gl, this._targetTexture);
+        this._frameBuffer.bind(renderer);
+    }
+    renderer.gl.clearColor(1, 1, 1, 1);
+    renderer.gl.clear(renderer.gl.COLOR_BUFFER_BIT);
+    if (this._frameBuffer) {
+        this._frameBuffer.unbind(renderer);
+    }
 };
 
 module.exports = PostProcessPass;

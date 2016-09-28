@@ -1,6 +1,7 @@
 import qtek from 'qtek';
 import GBuffer from './graphic/GBuffer';
-import SSAOPass from './graphic/SSAOPass';
+// import SSAOPass from './graphic/SSAOPass';
+import SSAOPass from './graphic/AlchemyAOPass';
 import SSRPass from './graphic/SSRPass';
 
 var hdrJson = JSON.parse(require('text!./graphic/hdr.json'));
@@ -47,9 +48,8 @@ class ViewMain {
         this._gBuffer = new GBuffer();
 
         this._ssaoPass = new SSAOPass({
-            radius: 0.5,
-            kernelSize: 128,
-            gBuffer: this._gBuffer
+            gBuffer: this._gBuffer,
+            renderToTexture: true
         });
         this._ssrPass = new SSRPass({
             gBuffer: this._gBuffer,
@@ -61,6 +61,8 @@ class ViewMain {
         this._colorTex = new qtek.Texture2D();
 
         this._shadowMapPass = new qtek.prePass.ShadowMap({
+            shadowCascade: 2,
+            cascadeSplitLogFactor: 0.5
             // softShadow: qtek.prePass.ShadowMap.VSM
         });
 
@@ -87,7 +89,7 @@ class ViewMain {
             flipY: false
         });
         self._sourceNode = self._compositor.getNodeByName('source');
-        lutTex.load('asset/texture/lut.png')
+        lutTex.load('asset/texture/lut/filmstock_50.png')
             .success(function () {
                 self.render();
             });
@@ -109,13 +111,13 @@ class ViewMain {
         mainLight.lookAt(scene.position);
         scene.add(mainLight);
 
-        var fillLight = new qtek.light.Directional({
-            intensity: 0.4,
-            castShadow: false
-        });
-        fillLight.position.set(10, 10, 10);
-        fillLight.lookAt(scene.position);
-        scene.add(fillLight);
+        // var fillLight = new qtek.light.Directional({
+        //     intensity: 0.4,
+        //     castShadow: false
+        // });
+        // fillLight.position.set(10, 10, 10);
+        // fillLight.lookAt(scene.position);
+        // scene.add(fillLight);
 
         var ambientLight = new qtek.light.Ambient({
             intensity: 0.3
@@ -165,11 +167,11 @@ class ViewMain {
         var lastSelected = null;
 
         function select(mesh) {
-            // mesh.material.set('mixIntensity', 0.2);
+            mesh.material.set('mixIntensity', 0.2);
             self.render();
         }
         function unSelect(mesh) {
-            // mesh.material.set('mixIntensity', 0);
+            mesh.material.set('mixIntensity', 0);
             self.render();
         }
 
@@ -233,8 +235,8 @@ class ViewMain {
 
         var scene = this._scene;
         var camera = this._camera;
-        scene.update(true);
-        camera.update(true);
+        scene.update();
+        camera.update();
         this._gBuffer.update(renderer, scene, camera);
         if (this.enableSsao) {
             this._ssaoPass.render(renderer, camera);
@@ -263,8 +265,9 @@ class ViewMain {
         this._compositor.render(renderer);
 
         // this._shadowMapPass.renderDebug(renderer);
-        // this._debugPass.setUniform('texture', this._ssrPass._ssrPass.getTargetTexture());
+        // this._debugPass.setUniform('texture', this._ssaoPass.getTargetTexture());
         // this._debugPass.render(renderer);
+
 
         renderStat.renderTime = Date.now() - time;
 
@@ -331,7 +334,6 @@ class ViewMain {
         return new Promise(function (resolve, reject) {
             loader.load(url);
             loader.success(function (result) {
-                self.render();
                 resolve(result.clips);
             }).error(function () {
                 reject();
@@ -365,13 +367,11 @@ class ViewMain {
         var bbox = new qtek.math.BoundingBox();
         var bboxTmp = new qtek.math.BoundingBox();
         var cp = new qtek.math.Vector3();
-        // var avgZ = new qtek.math.Vector3();
         node.traverse(function (mesh) {
             if (mesh.geometry) {
                 bboxTmp.copy(mesh.geometry.boundingBox);
                 bboxTmp.applyTransform(mesh.worldTransform);
                 bbox.union(bboxTmp);
-                // avgZ.add(mesh.worldTransform.z);
             }
         });
 
@@ -382,16 +382,6 @@ class ViewMain {
 
         // Get size;
         bbox.applyTransform(this._camera.viewMatrix);
-        // avgZ.normalize();
-        // var sub = new qtek.math.Vector3().copy(bboxTmp.max).sub(bboxTmp.min);
-        // var min = Math.min(Math.abs(sub.x), Math.abs(sub.y), Math.abs(sub.z));
-        // if (Math.abs(sub.x) === min) {
-        //     z = qtek.math.Vector3.POSITIVE_X;
-        // }
-        // else {
-        //     // no y
-        //     z = qtek.math.Vector3.POSITIVE_Z;
-        // }
         var bboxSize = bbox.min.distance(bbox.max);
 
         this._camera.position.copy(new qtek.math.Vector3().add(cp).scaleAndAdd(z, bboxSize * 1.5));

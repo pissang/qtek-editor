@@ -40,12 +40,10 @@ export default {
 
         // viewMain.loadModel('asset/model/bmps/bmps.gltf')
         // viewMain.loadModel('asset/model/tronCycle/tronCycle.gltf')
-        viewMain.loadModel('asset/model/kitchen/kitchen.gltf')
+        viewMain.loadModel('asset/model/kitchen/kitchen-mod.gltf')
             .then(function (rootNode) {
-                viewMain.loadPanorama('http://' + window.location.host + '/baidu-screen/asset/texture/hall.hdr', -1);
+                viewMain.loadPanorama('asset/texture/hall.hdr', -1);
                 rootNode.rotation.rotateX(-Math.PI / 2);
-
-                setInterval(saveLocal, 5000);
 
                 self._rootNode = modelRootNode = rootNode;
 
@@ -53,7 +51,20 @@ export default {
 
                 loadLocal();
 
+                setInterval(saveLocal, 5000);
+
                 // viewMain.shotEnvMap();
+
+                viewMain.loadCameraAnimation('asset/model/kitchen/camera01-05.gltf')
+                    .then(function (clips) {
+                        var clipsArr = [];
+                        for (var name in clips) {
+                            clipsArr.push(clips[name]);
+
+                            store.clips.push(name);
+                        }
+                        self._clips = clipsArr;
+                    });
             });
 
         window.addEventListener('resize', function () { viewMain.resize(); });
@@ -343,7 +354,7 @@ export default {
         },
 
         playAnimation: function () {
-            this._viewMain.playCameraAnimation(this._clip);
+            this._viewMain.playCameraAnimation(this._clips[store.currentClip]);
         }
     }
 };

@@ -1,7 +1,7 @@
 <template>
 <div class="property-range">
     <input type="range" :step="option.step" :min="option.min" :max="option.max" v-model="value">
-    <input class="property-range-text" type="text" v-model="value" lazy>
+    <input class="property-range-text" type="text" v-model="value" lazy  number>
 </div>
 </template>
 

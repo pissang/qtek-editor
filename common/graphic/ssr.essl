@@ -400,7 +400,7 @@ varying vec2 v_Texcoord;
 void main()
 {
     gl_FragColor = encodeHDR(
-        decodeHDR(texture2D(ssrTex, v_Texcoord))
+        decodeHDR(texture2D(ssrTex, v_Texcoord)) * texture2D(ssaoTex, v_Texcoord).r
         + decodeHDR(texture2D(colorTex, v_Texcoord))
     );
 }
