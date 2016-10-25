@@ -26,4 +26,14 @@
             </div>
         </div>
     </div>
+
+    <div id="ssr">
+        <h5>DOF</h5>
+        <div class="rows">
+            <div class="row" v-for="(index, item) in dof">
+                <label>{{item.title}}</label>
+                <component :is="item.type" :value.sync="item.value" :option="item"></component>
+            </div>
+        </div>
+    </div>
 </div>

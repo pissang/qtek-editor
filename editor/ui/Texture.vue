@@ -1,7 +1,7 @@
 <template>
 <div class="property-texture">
-    <div class="property-texture-upload-container">
-        <img :src="value ? (option.textureRootPath + '/' + value ) : ''">
+    <div :class="['property-texture-upload-container', value ? '' : 'empty']">
+        <img :src="value ? (option.textureRootPath + '/' + value ) : 'editor/img/chessboard.jpg'">
         <div class="property-texture-upload">UPLOAD</div>
     </div>
     <button @click="clear">清除</button>
@@ -9,6 +9,8 @@
 </template>
 
 <script>
+
+// var defaultImg = 'editor/img/chessboard.jpg';
 module.exports = {
     props: {
         value: {
@@ -52,6 +54,16 @@ module.exports = {
 
     .property-texture-upload-container {
         position: relative;
+        img {
+            max-width: 100%;
+        }
+
+        &.empty {
+            img {
+                opacity: 0.4;
+                width: 100px;
+            }
+        }
     }
 
     .property-texture-upload {
@@ -64,9 +76,7 @@ module.exports = {
         bottom: 0;
         right: 0;
         cursor: pointer;
-    }
-    img {
-        width: 100%;
+
     }
 }
 </style>

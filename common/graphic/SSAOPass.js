@@ -1,4 +1,5 @@
 import qtek from 'qtek';
+import PostProcessPass from './PostProcessPass';
 
 qtek.Shader['import'](require('text!./normal.essl'));
 qtek.Shader['import'](require('text!./ssao.essl'));
@@ -47,17 +48,16 @@ export default class SSAOPass {
 
         opt = opt || {};
 
-        this._ssaoPass = new qtek.compositor.Pass({
-            fragment: qtek.Shader.source('ssao.fragment')
-        });
-        this._blurPass = new qtek.compositor.Pass({
-            fragment: qtek.Shader.source('ssao.blur')
-        });
-        this._ssaoFramebuffer = new qtek.FrameBuffer();
-        this._ssaoTex = new qtek.Texture2D();
+        this._gBuffer = opt.gBuffer;
 
-        this._blurFramebuffer = new qtek.FrameBuffer();
-        this._blurTex = new qtek.Texture2D();
+        this._ssaoPass = new PostProcessPass(qtek.Shader.source('ssao.fragment'), true, [1, 1, 1, 1]);
+        this._blurPass1 = new PostProcessPass(qtek.Shader.source('ssao.blur_h'), true);
+        this._blurPass2 = new PostProcessPass(qtek.Shader.source('ssao.blur_v'), opt.renderToTexture);
+
+        this._blurPass1.setUniform('colorTex', this._ssaoPass.getTargetTexture());
+        this._blurPass1.setUniform('depthTex', this._gBuffer.getDepthTex());
+        this._blurPass2.setUniform('colorTex', this._blurPass1.getTargetTexture());
+        this._blurPass2.setUniform('depthTex', this._gBuffer.getDepthTex());
 
         this.setNoiseSize(4);
         this.setKernelSize(opt.kernelSize || 64);
@@ -68,40 +68,37 @@ export default class SSAOPass {
         if (opt.power != null) {
             this.setParameter('power', opt.power);
         }
-
-        this._gBuffer = opt.gBuffer;
     }
 
     _resize (width, height) {
-        this._ssaoTex.width = width;
-        this._ssaoTex.height = height;
-        this._blurTex.width = width;
-        this._blurTex.height = height;
-        this._ssaoTex.dirty();
-        this._blurTex.dirty();
+        this._ssaoPass.resize(width / 2, height / 2);
+        this._blurPass1.resize(width, height);
+        this._blurPass2.resize(width, height);
+
+        this._blurPass1.setUniform('textureSize', [width / 2, height / 2]);
+        this._blurPass2.setUniform('textureSize', [width / 2, height / 2]);
 
         this._width = width;
         this._height = height;
     }
 
     render (renderer, camera) {
-        if (renderer.getWidth() !== this._width ||
-            renderer.getHeight() !== this._height
-        ) {
-            this._resize(renderer.getWidth(), renderer.getHeight());
-        }
-
         var width = renderer.getWidth();
         var height = renderer.getHeight();
+
+        if (width !== this._width ||
+            height !== this._height
+        ) {
+            this._resize(width, height);
+        }
+
         var normalTex = this._gBuffer.getNormalTex();
         var depthTex = this._gBuffer.getDepthTex();
         var ssaoPass = this._ssaoPass;
-        var blurPass = this._blurPass;
 
-        ssaoPass.setUniform('gBufferTex', normalTex);
+        ssaoPass.setUniform('normalTex', normalTex);
         ssaoPass.setUniform('depthTex', depthTex);
-        ssaoPass.setUniform('gBufferTexSize', [normalTex.width, normalTex.height]);
-        ssaoPass.setUniform('viewportSize', [width, height]);
+        ssaoPass.setUniform('normalTexSize', [normalTex.width, normalTex.height]);
 
         var viewInverseTranspose = new qtek.math.Matrix4();
         qtek.math.Matrix4.transpose(viewInverseTranspose, camera.worldTransform);
@@ -110,51 +107,30 @@ export default class SSAOPass {
         ssaoPass.setUniform('projectionInv', camera.invProjectionMatrix._array);
         ssaoPass.setUniform('viewInverseTranspose', viewInverseTranspose._array);
 
-        var ssaoTexture = this._ssaoTex;
-
-        this._ssaoFramebuffer.attach(renderer.gl, ssaoTexture);
-        this._ssaoFramebuffer.bind(renderer);
-        renderer.gl.clearColor(1, 1, 1, 1);
-        renderer.gl.clear(renderer.gl.COLOR_BUFFER_BIT);
         ssaoPass.render(renderer);
-        this._ssaoFramebuffer.unbind(renderer);
 
-        // blurPass.material.blend = function (gl) {
-        //     gl.blendEquation(gl.FUNC_ADD);
-        //     gl.blendFunc(gl.ZERO, gl.SRC_COLOR);
-        // };
-        // blurPass.blendWithPrevious = true;
-        this._blurFramebuffer.attach(renderer.gl, this._blurTex);
-        this._blurFramebuffer.bind(renderer);
-        renderer.gl.clearColor(1, 1, 1, 1);
-        renderer.gl.clear(renderer.gl.COLOR_BUFFER_BIT);
-        blurPass.setUniform('textureSize', [width, height]);
-        blurPass.setUniform('texture', ssaoTexture);
-        blurPass.render(renderer);
-        this._blurFramebuffer.unbind(renderer);
+        this._blurPass1.render(renderer);
+        this._blurPass2.render(renderer);
     }
 
     clear (renderer) {
-        this._blurFramebuffer.attach(renderer.gl, this._blurTex);
-        this._blurFramebuffer.bind(renderer);
-        renderer.gl.clearColor(1, 1, 1, 1);
-        renderer.gl.clear(renderer.gl.COLOR_BUFFER_BIT);
-        this._blurFramebuffer.unbind(renderer);
+        this._blurPass2.clear(renderer);
     }
 
     getTargetTexture () {
-        return this._blurTex;
+        return this._blurPass2.getTargetTexture();
     }
 
     setParameter (name, val) {
-        if (name === 'noiseTexSize') {
-            this.setNoiseSize(val);
-        }
-        else if (name === 'kernelSize') {
+        if (name === 'kernelSize') {
             this.setKernelSize(val);
         }
+        else if (name === 'noiseSize') {
+            this.setNoiseSize(val);
+        }
         else if (name === 'blurSize') {
-            this._blurPass.material.shader.define('fragment', 'BLUR_SIZE', val);
+            this._blurPass1.setUniform('blurSize', val);
+            this._blurPass2.setUniform('blurSize', val);
         }
         else {
             this._ssaoPass.setUniform(name, val);
@@ -162,7 +138,7 @@ export default class SSAOPass {
     }
 
     setKernelSize (size) {
-        this._ssaoPass.material.shader.define('fragment', 'KERNEL_SIZE', size);
+        this._ssaoPass.getShader().define('fragment', 'KERNEL_SIZE', size);
         this._ssaoPass.setUniform('kernel', generateKernel(size));
     }
 
@@ -173,7 +149,7 @@ export default class SSAOPass {
             this._ssaoPass.setUniform('noiseTex', generateNoiseTexture(size));
         }
         else {
-            texture.data = generateNoiseData(size);
+            texture.pixels = generateNoiseData(size);
             texture.width = texture.height = size;
             texture.dirty();
         }

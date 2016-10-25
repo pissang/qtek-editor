@@ -1,5 +1,5 @@
 <template>
-<div>
+<div class="property-color">
     <input type="color" v-model="value">
     <input type="text" v-model="value" lazy>
 </div>
@@ -16,6 +16,11 @@ module.exports = {
 };
 </script>
 
-<style>
-
+<style lang='sass'>
+.property-color {
+    input {
+        vertical-align: middle;
+        display: inline-block;
+    }
+}
 </style>

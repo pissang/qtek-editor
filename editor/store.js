@@ -90,10 +90,12 @@ var store = {
 
     ssao: {
         radius: new RangeType('radius', 'Radius', 0.5, 0, 2, 0.005),
-        kernelSize: new RangeType('kernelSize', 'Kernel Size', 64, 0, 256, 1),
+        kernelSize: new RangeType('kernelSize', 'Kernel Size', 64, 1, 256, 1),
         power: new RangeType('power', 'Power', 0.2, -5, 5, 0.01),
         scale: new RangeType('scale', 'Scale', 0.5, 0, 5, 0.01),
-        bias: new RangeType('bias', 'Bias', 5e-4, 1e-4, 2e-3),
+        blurSize: new RangeType('blurSize', 'Blur Size', 1, 0, 5),
+        edgeSharpness: new RangeType('epsilon', 'Edge Sharpness', 0.5, 0, 4),
+        bias: new RangeType('bias', 'Bias', 5e-4, 1e-4, 2e-1),
         epsilon: new RangeType('epsilon', 'Epsilon', 0.1, 1e-3, 0.2)
     },
 
@@ -107,6 +109,12 @@ var store = {
         eyeFadeEnd: new RangeType('eyeFadeEnd', 'Eye Fade End', 1, 0, 1),
         minGlossiness: new RangeType('minGlossiness', 'Min Glossiness', 0.4, 0, 1),
         zThicknessThreshold: new RangeType('zThicknessThreshold', 'Z Thickness Threshold', 0.1, 0, 2)
+    },
+
+    dof: {
+        focalDist: new RangeType('focalDist', 'Focal Dist', 5, 0.1, 20),
+        focalRange: new RangeType('focalRange', 'Focal Range', 1, 0, 5),
+        fstop: new RangeType('fstop', 'f/stop', 1.4, 1, 10)
     },
 
     inspectorMaterial: [

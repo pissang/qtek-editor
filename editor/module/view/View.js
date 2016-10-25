@@ -1,4 +1,5 @@
 import ViewMain from '../../../common/ViewMain';
+import Scene from '../../../common/Scene';
 import store from '../../store';
 import qtek from 'qtek';
 import colorUtil from 'zrender/lib/tool/color';
@@ -14,46 +15,28 @@ export default {
         var viewMain = this._viewMain = new ViewMain(viewRoot, {
             enablePicking: true
         });
+        var scene = this._scene = new Scene(viewMain, {
+            textureRootPath: store.textureRootPath
+        });
         var self = this;
 
-        var modelRootNode;
-        // TODO
-        // viewMain.loadModel('http://' + window.location.host + '/baidu-screen/asset/baiduworld/zhanqu-simple2.gltf')
-        //     .then(function (rootNode) {
-        //         viewMain.loadPanorama('http://' + window.location.host + '/baidu-screen/asset/texture/hall.hdr', -2);
-        //         rootNode.rotation.rotateX(-Math.PI / 2);
-
-        //         viewMain.focusOn(rootNode);
-
-        //         self._rootNode = modelRootNode = rootNode;
-
-        //         setInterval(saveLocal, 5000);
-
-        //         loadLocal();
-
-        //         viewMain.loadCameraAnimation('http://' + window.location.host + '/baidu-screen/asset/baiduworld/animation.json')
-        //             .then(function (clips) {
-        //                 self._clip = clips[Object.keys(clips)[0]];
-        //             });
-
-        //     });
-
-        // viewMain.loadModel('asset/model/bmps/bmps.gltf')
-        // viewMain.loadModel('asset/model/tronCycle/tronCycle.gltf')
-        viewMain.loadModel('asset/model/kitchen/kitchen-mod.gltf')
+        // scene.loadModel('asset/model/bmps/bmps.gltf')
+        // scene.loadModel('asset/model/tronCycle/tronCycle.gltf')
+        scene.loadModel('asset/model/kitchen/kitchen-mod.gltf')
+        // scene.loadModel('asset/model/kitchen/sofa.gltf')
+        // scene.loadModel('asset/model/watch/watch.gltf')
             .then(function (rootNode) {
-                viewMain.loadPanorama('asset/texture/hall.hdr', -1);
                 rootNode.rotation.rotateX(-Math.PI / 2);
-
-                self._rootNode = modelRootNode = rootNode;
 
                 viewMain.focusOn(rootNode);
 
-                loadLocal();
-
                 setInterval(saveLocal, 5000);
 
-                // viewMain.shotEnvMap();
+                loadLocal();
+
+                viewMain.loadPanorama('asset/texture/hall.hdr', -0.6, function () {
+                    viewMain.updateEnvProbe();
+                });
 
                 viewMain.loadCameraAnimation('asset/model/kitchen/camera01-05.gltf')
                     .then(function (clips) {
@@ -128,55 +111,9 @@ export default {
             for (var name in inspectorMaterialMap) {
                 config[name] = inspectorMaterialMap[name].value;
             }
-            setMaterial(currentMaterial, config);
-            viewMain.render();
+            scene.setMaterial(currentMaterial, config);
         }, { deep: true });
 
-        function setMaterial(mat, config) {
-            var enabledTextures = textureProperies.filter(function (name) {
-                return config[name];
-            });
-            viewMain.updateShader(enabledTextures, mat);
-
-            simpleProperties.forEach(function (prop) {
-                var val = config[prop];
-                if (inspectorMaterialMap[prop].type === 'color') {
-                    val = parseColor(val);
-                }
-                if (val != null) {
-                    mat.set(prop, val);
-                }
-            });
-
-            var isTransparent = config.alpha < 1;
-            mat.transparent = isTransparent;
-            mat.depthMask = !isTransparent;
-
-            textureProperies.forEach(function (name) {
-                var textureFileName = config[name];
-                if (textureFileName) {
-                    var texture = mat.get(name) || new qtek.Texture2D({
-                        wrapS: qtek.Texture.REPEAT,
-                        wrapT: qtek.Texture.REPEAT,
-                        anisotropic: 32
-                    });
-                    var path = store.textureRootPath + '/' + textureFileName;
-                    if (texture && texture.image && texture.image.src === path) {
-                        return;
-                    }
-                    texture.load(path).success(function () {
-                        viewMain.render();
-                    });
-                    // FIXME
-                    mat.set(name, texture);
-                }
-                else {
-                    mat.set(name, null);
-                }
-            });
-
-            mat.set('uvRepeat', [+config.uvRepeat0 || 1, +config.uvRepeat1 || 1]);
-        }
 
         function stringifyColor(colorArr) {
             if (typeof colorArr === 'string') {
@@ -192,43 +129,8 @@ export default {
             ));
         }
 
-        function parseColor(color) {
-            if (typeof color === 'string') {
-                var result = colorUtil.parse(color);
-                if (result) {
-                    return result.slice(0, 3).map(function (channel) {
-                        return channel / 255;
-                    });
-                }
-                return [0, 0, 0];
-            }
-            return color || [0, 0, 0];
-        }
-
         function saveLocal() {
-            var materialMap = {};
-            if (modelRootNode) {
-                modelRootNode.traverse(function (mesh) {
-                    var material = mesh.material;
-                    if (material) {
-                        materialMap[material.name] = {};
-                        simpleProperties.forEach(function (propName) {
-                            materialMap[material.name][propName] = material.get(propName);
-                        });
-                        textureProperies.forEach(function (propName) {
-                            var tex = material.get(propName);
-                            if (tex && tex.image && tex.image.src) {
-                                materialMap[material.name][propName] = tex.image.src.split('/').pop();
-                            }
-                        });
-                        var uvRepeat = material.get('uvRepeat');
-                        if (uvRepeat) {
-                            materialMap[material.name].uvRepeat0 = uvRepeat[0];
-                            materialMap[material.name].uvRepeat1 = uvRepeat[1];
-                        }
-                    }
-                });
-            }
+            var materialMap = scene.exportMaterials();
             var ssao = {};
             for (var name in store.ssao) {
                 ssao[name] = store.ssao[name].value;
@@ -237,10 +139,15 @@ export default {
             for (var name in store.ssr) {
                 ssr[name] = store.ssr[name].value;
             }
+            var dof = {};
+            for (var name in store.dof) {
+                dof[name] = store.dof[name].value;
+            }
 
             window.localStorage.setItem('qtek-editor-draft', JSON.stringify({
                 ssao: ssao,
                 ssr: ssr,
+                dof: dof,
                 materials: materialMap,
                 currentCamera: {
                     position: store.currentCamera.position,
@@ -257,13 +164,6 @@ export default {
         }
 
         function load(config) {
-            modelRootNode.traverse(function (mesh) {
-                var material = mesh.material;
-                if (material && material.name && config.materials[material.name]) {
-                    var materialConfig = config.materials[material.name];
-                    setMaterial(material, materialConfig);
-                }
-            });
             for (var name in config.ssao) {
                 if (store.ssao[name]) {
                     store.ssao[name].value = config.ssao[name];
@@ -274,15 +174,13 @@ export default {
                     store.ssr[name].value = config.ssr[name];
                 }
             }
-
-            if (config.currentCamera) {
-                viewMain.setCameraPositionAndRotation(
-                    config.currentCamera.position,
-                    config.currentCamera.rotation
-                );
+            for (var name in config.dof) {
+                if (store.dof[name]) {
+                    store.dof[name].value = config.dof[name];
+                }
             }
 
-            viewMain.render();
+            scene.loadConfig(config);
         }
 
         function updateSsaoParameter() {
@@ -297,9 +195,16 @@ export default {
             }
             viewMain.render();
         }
+        function updateDofParameter() {
+            for (var name in store.dof) {
+                viewMain.setDofParameter(name, store.dof[name].value);
+            }
+            viewMain.render();
+        }
 
         this.$watch('ssao', updateSsaoParameter, { deep: true });
         this.$watch('ssr', updateSsrParameter, { deep: true });
+        this.$watch('dof', updateDofParameter, { deep: true });
 
         updateSsaoParameter();
 

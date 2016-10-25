@@ -9,23 +9,23 @@ function generateKernel(size) {
     var kernel = new Float32Array(size * 2);
     var v2 = new Vector2();
 
-    // Most 32 samples one circle
-    var repeat = Math.ceil(size / 32);
+    // Hardcoded 7 REPEAT
+    var repeat = 7;
     // Spiral sample
     for (var i = 0; i < size; i++) {
-        var angle = (i + 1) / size * Math.PI * 2 * repeat;
+        var angle = (i + 0.5) / size * Math.PI * 2 * repeat;
         v2.set(
-            i / size * Math.cos(angle),
-            i / size * Math.sin(angle)
+            (i + 0.5) / size * Math.cos(angle),
+            (i + 0.5) / size * Math.sin(angle)
         );
         // v2.set(Math.random() * 2 - 1, Math.random() * 2 - 1)
         //     .normalize().scale(Math.random());
         kernel[i * 2] = v2.x;
         kernel[i * 2 + 1] = v2.y;
     }
+
     return kernel;
 }
-
 function generateNoiseData(size) {
     var data = new Uint8Array(size * size * 4);
     var n = 0;
@@ -65,9 +65,9 @@ function AlchemyAO(opt) {
     this._blurPass2 = new PostProcessPass(qtek.Shader.source('alchemy.blur_v'), opt.renderToTexture);
 
     this._blurPass1.setUniform('colorTex', this._ssaoPass.getTargetTexture());
-    this._blurPass1.setUniform('normalTex', this._gBuffer.getNormalTex());
+    this._blurPass1.setUniform('depthTex', this._gBuffer.getDepthTex());
     this._blurPass2.setUniform('colorTex', this._blurPass1.getTargetTexture());
-    this._blurPass2.setUniform('normalTex', this._gBuffer.getNormalTex());
+    this._blurPass2.setUniform('depthTex', this._gBuffer.getDepthTex());
 
     this.setKernelSize(opt.kernelSize || 12);
     this.setParameter('blurSize', opt.blurSize || 1);
@@ -78,6 +78,8 @@ function AlchemyAO(opt) {
     if (opt.power != null) {
         this.setParameter('power', opt.power);
     }
+
+    this._downScale = opt.downScale || 1;
 }
 
 AlchemyAO.prototype.render = function (renderer, camera) {
@@ -100,15 +102,15 @@ AlchemyAO.prototype.render = function (renderer, camera) {
 
     var ssaoTexture = this._ssaoPass.getTargetTexture();
     if (width !== ssaoTexture.width || height !== ssaoTexture.height) {
-        this._ssaoPass.resize(width, height);
+        this._ssaoPass.resize(width / this._downScale, height / this._downScale);
         this._blurPass1.resize(width, height);
         this._blurPass2.resize(width, height);
+        this._blurPass1.setUniform('textureSize', [width / this._downScale, height / this._downScale]);
+        this._blurPass2.setUniform('textureSize', [width / this._downScale, height / this._downScale]);
     }
     ssaoPass.render(renderer);
 
-    this._blurPass1.setUniform('textureSize', [width, height]);
     this._blurPass1.render(renderer);
-    this._blurPass2.setUniform('textureSize', [width, height]);
     this._blurPass2.render(renderer);
 };
 
@@ -124,9 +126,9 @@ AlchemyAO.prototype.setParameter = function (name, val) {
     else if (name === 'noiseSize') {
         this.setNoiseSize(val);
     }
-    else if (name === 'blurSize') {
-        this._blurPass1.setUniform('blurSize', val);
-        this._blurPass2.setUniform('blurSize', val);
+    else if (name === 'blurSize' || name === 'edgeSharpness') {
+        this._blurPass1.setUniform(name, val);
+        this._blurPass2.setUniform(name, val);
     }
     else {
         this._ssaoPass.setUniform(name, val);
@@ -146,7 +148,7 @@ AlchemyAO.prototype.setNoiseSize = function (size) {
         this._ssaoPass.setUniform('noiseTex', generateNoiseTexture(size));
     }
     else {
-        texture.data = generateNoiseData(size);
+        texture.pixels = generateNoiseData(size);
         texture.width = texture.height = size;
         texture.dirty();
     }

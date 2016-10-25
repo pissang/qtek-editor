@@ -38,6 +38,7 @@ function GBuffer() {
     this._gBufferFramebuffer = new qtek.FrameBuffer();
 
     this._normalTex = new qtek.Texture2D({
+        // type: qtek.Texture.HALF_FLOAT
         // minFilter: qtek.Texture.NEAREST,
         // magFilter: qtek.Texture.NEAREST
     });

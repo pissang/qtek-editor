@@ -1,7 +1,7 @@
 <template>
 <div class="property-range">
     <input type="range" :step="option.step" :min="option.min" :max="option.max" v-model="value">
-    <input class="property-range-text" type="text" v-model="value" lazy  number>
+    <input type="text" v-model="value" lazy  number>
 </div>
 </template>
 
@@ -26,8 +26,48 @@ module.exports = {
 };
 </script>
 
-<style>
-.property-range-text {
-    width: 40px;
+<style lang="sass">
+
+.property-range {
+    input {
+        vertical-align: middle;
+        display: inline-block;
+    }
+    input[type=text] {
+        width: 40px;
+    }
+
+    input[type=range] {
+        -webkit-appearance: none;
+        cursor: pointer;
+    }
+
+    input[type=range]::-webkit-slider-runnable-track {
+        width: 300px;
+        height: 2px;
+        background: #777;
+        border: none;
+        border-radius: 3px;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        border: none;
+        height: 14px;
+        width: 14px;
+        border-radius: 50%;
+        background: #aaa;
+        margin-top: -6px;
+    }
+
+    input[type=range]:focus {
+        outline: none;
+    }
+
+    input[type=range]:focus::-webkit-slider-runnable-track {
+        background: #ccc;
+    }
+
 }
+
 </style>

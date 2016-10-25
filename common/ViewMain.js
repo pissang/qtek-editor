@@ -4,7 +4,8 @@ import GBuffer from './graphic/GBuffer';
 import SSAOPass from './graphic/AlchemyAOPass';
 import SSRPass from './graphic/SSRPass';
 
-var hdrJson = JSON.parse(require('text!./graphic/hdr.json'));
+var hdrJson = JSON.parse(require('text!./graphic/composite.json'));
+
 
 class ViewMain {
     constructor(dom, option) {
@@ -16,11 +17,12 @@ class ViewMain {
         var renderer = new qtek.Renderer({
             canvas: document.createElement('canvas'),
             devicePixelRatio: 1,
-            color: [1.0, 1.0, 1.0, 0.2]
+            color: [250 / 255, 214 / 255, 165 / 255, 0.2]
         });
 
         var camera = new qtek.camera.Perspective();
         var scene = new qtek.Scene();
+
 
         this._dom = dom;
         this._renderer = renderer;
@@ -50,6 +52,7 @@ class ViewMain {
         this._ssaoPass = new SSAOPass({
             gBuffer: this._gBuffer,
             renderToTexture: true
+            // downScale: 2
         });
         this._ssrPass = new SSRPass({
             gBuffer: this._gBuffer,
@@ -62,17 +65,67 @@ class ViewMain {
 
         this._shadowMapPass = new qtek.prePass.ShadowMap({
             shadowCascade: 2,
-            cascadeSplitLogFactor: 0.5
-            // softShadow: qtek.prePass.ShadowMap.VSM
+            cascadeSplitLogFactor: 0
         });
 
         this._initCompositor();
+
+        this.addEnvProbe([0, 1.4, 0]);
 
         this._debugPass = new qtek.compositor.Pass({
             fragment: qtek.Shader.source('qtek.compositor.output')
         });
 
         this.resize();
+    }
+
+    addModel (rootNode) {
+        var self = this;
+        rootNode.traverse(function (mesh) {
+            var geometry = mesh.geometry;
+            if (geometry) {
+                // mesh.culling = false;
+                mesh.beforeRender = function () {
+                    var viewSize = mesh.material.get('viewportSize') || [];
+                    viewSize[0] = self._renderer.getWidth();
+                    viewSize[1] = self._renderer.getHeight();
+                    mesh.material.set('viewportSize', viewSize);
+                };
+                if (geometry.attributes.texcoord0.value) {
+                    geometry.generateTangents();
+                }
+                // generateUv(geometry);
+            }
+        });
+        this._scene.add(rootNode);
+        this.render();
+    }
+
+    addLight (light) {
+        this._scene.add(light);
+    }
+
+    addEnvProbe (position) {
+        var sphere = new qtek.Mesh({
+            geometry: new qtek.geometry.Sphere(),
+            material: new qtek.Material({
+                shader: qtek.shader.library.get('qtek.standard', {
+                    textures: ['environmentMap'],
+                    fragmentDefines: {
+                        USE_METALNESS: true
+                    }
+                })
+            })
+        });
+        sphere.material.set('glossiness', 1);
+        sphere.material.set('metalness', 1);
+        sphere.material.set('metal', 1);
+        sphere.scale.set(0.2, 0.2, 0.2);
+
+        sphere.position.setArray(position);
+        sphere.update();
+
+        this._envProbe = sphere;
     }
 
     _initCompositor () {
@@ -95,6 +148,7 @@ class ViewMain {
             });
         this._compositor.getNodeByName('lut').setParameter('lookup', lutTex);
 
+        this._cocNode = self._compositor.getNodeByName('coc');
     }
 
     _initScene () {
@@ -107,7 +161,7 @@ class ViewMain {
             shadowResolution: 2048,
             color: [250 / 255, 214 / 255, 165 / 255]
         });
-        mainLight.position.set(-5, 7, -20);
+        mainLight.position.set(-5, 7, -18);
         mainLight.lookAt(scene.position);
         scene.add(mainLight);
 
@@ -119,11 +173,25 @@ class ViewMain {
         // fillLight.lookAt(scene.position);
         // scene.add(fillLight);
 
-        var ambientLight = new qtek.light.Ambient({
-            intensity: 0.3
+        var ambientLight = new qtek.light.AmbientSH({
+            // Init coefficients
+            coefficients: [0.8450393676757812, 0.7135089635848999, 0.6934053897857666, 0.02310405671596527, 0.17135757207870483, 0.28332242369651794, 0.343019962310791, 0.2880895435810089, 0.2998031973838806, 0.08001846075057983, 0.10719859600067139, 0.12824314832687378, 0.003927173092961311, 0.04206192493438721, 0.06470289081335068, 0.036095526069402695, 0.04928380250930786, 0.058642253279685974, -0.009344635531306267, 0.06963406503200531, 0.1312279999256134, -0.05935414880514145, -0.04865729808807373, -0.060036804527044296, 0.04625355824828148, 0.0563165508210659, 0.050963230431079865],
+            intensity: 0.4
+            // color: [250 / 255, 214 / 255, 165 / 255]
         });
         scene.add(ambientLight);
 
+        this._ambientLight = ambientLight;
+
+        var pointLight = new qtek.light.Point({
+            range: 8,
+            intensity: 1,
+            castShadow: false,
+            color: [250 / 255, 214 / 255, 165 / 255]
+        });
+        pointLight.position.y = 1;
+        pointLight.position.z = 0;
+        scene.add(pointLight);
     }
 
     _initControl () {
@@ -219,7 +287,7 @@ class ViewMain {
         camera.update();
 
         this._orbitControl.origin.copy(camera.position)
-            .scaleAndAdd(camera.worldTransform.z, -10);
+            .scaleAndAdd(camera.worldTransform.z, -1);
     }
 
     render () {
@@ -230,7 +298,6 @@ class ViewMain {
         this._needsUpdate = false;
         var time = Date.now();
 
-        var renderStat = {};
         var renderer = this._renderer;
 
         var scene = this._scene;
@@ -247,7 +314,7 @@ class ViewMain {
         this._shadowMapPass.render(renderer, scene, camera);
         this._colorFb.attach(renderer.gl, this._colorTex);
         this._colorFb.bind(renderer);
-        renderer.render(scene, camera, true, true);
+        var renderStat = renderer.render(scene, camera, true, true);
         this._colorFb.unbind(renderer);
 
         if (this.enableSsr) {
@@ -262,12 +329,16 @@ class ViewMain {
             }
         }
 
+        this._cocNode.setParameter('depth', this._gBuffer.getDepthTex());
         this._compositor.render(renderer);
 
-        // this._shadowMapPass.renderDebug(renderer);
-        // this._debugPass.setUniform('texture', this._ssaoPass.getTargetTexture());
+        // this._debugPass.setUniform('texture', this._ssrPass._ssrPass.getTargetTexture());
         // this._debugPass.render(renderer);
+        // this._shadowMapPass.renderDebug(renderer);
 
+        // Render light probe
+        renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT);
+        renderer.renderQueue([this._envProbe], camera);
 
         renderStat.renderTime = Date.now() - time;
 
@@ -285,47 +356,6 @@ class ViewMain {
         this._colorTex.dirty();
 
         this.render();
-    }
-
-    loadModel (url) {
-        var rootNode = new qtek.Node();
-        var loader = new qtek.loader.GLTF({
-            rootNode: rootNode,
-            shaderName: 'qtek.standard'
-        });
-        var self = this;
-        this._scene.add(rootNode);
-        this._rootNode = rootNode;
-        return new Promise(function (resolve, reject) {
-            loader.load(url);
-            loader.success(function () {
-                rootNode.traverse(function (mesh) {
-                    var geometry = mesh.geometry;
-                    if (geometry) {
-                        // mesh.culling = false;
-                        mesh.beforeRender = function () {
-                            var viewSize = mesh.material.get('viewportSize') || [];
-                            viewSize[0] = self._renderer.getWidth();
-                            viewSize[1] = self._renderer.getHeight();
-                            mesh.material.set('viewportSize', viewSize);
-                        };
-                        if (geometry.attributes.texcoord0.value) {
-                            geometry.generateTangents();
-                        }
-                        // generateUv(geometry);
-                    }
-                });
-
-                resolve(rootNode);
-                self.render();
-            }).error(function () {
-                reject();
-            });
-        });
-    }
-
-    getRootNode () {
-        return this._rootNode;
     }
 
     loadCameraAnimation (url) {
@@ -377,7 +407,6 @@ class ViewMain {
 
         var z = this._camera.worldTransform.z;
 
-
         cp.add(bbox.min).add(bbox.max).scale(0.5);
 
         // Get size;
@@ -392,14 +421,19 @@ class ViewMain {
         this._orbitControl.origin.copy(cp);
     }
 
-    loadPanorama (url, exposure) {
+    loadPanorama (url, exposure, cb) {
         var self = this;
         var envMap = qtek.util.texture.loadTexture(
             url, {
                 exposure: exposure || 1
             }, function (envMap) {
                 envMap.flipY = false;
+
                 self.setEnvMap(envMap);
+
+                self.render();
+
+                cb && cb();
             }
         );
         // var skydome = new qtek.plugin.Skydome({
@@ -407,27 +441,32 @@ class ViewMain {
         // });
         // skydome.material.set('diffuseMap', envMap);
 
-        this.render();
     }
 
-    shotEnvMap () {
-        var textureCube = new qtek.TextureCube({
-            width: 128,
-            height: 128
-        });
-        var envMapPass = new qtek.prePass.EnvironmentMap({
-            shadowMapPass: this._shadowMapPass,
-            texture: textureCube
-        });
-        envMapPass.render(this._renderer, this._scene);
+    updateEnvProbe () {
+        if (this._envProbe) {
+            var textureCube = new qtek.TextureCube({
+                width: 128,
+                height: 128
+            });
+            var envMapPass = new qtek.prePass.EnvironmentMap({
+                shadowMapPass: this._shadowMapPass,
+                texture: textureCube
+            });
+            envMapPass.position.copy(this._envProbe.position);
 
-        this.setEnvMap(textureCube);
+            envMapPass.render(this._renderer, this._scene);
+
+            this.setEnvMap(textureCube, true);
+
+            textureCube.dispose(this._renderer.gl);
+        }
     }
 
-    setEnvMap (envMap) {
-        var result = this.prefilterEnvMap(envMap);
+    setEnvMap (envMap, decodeRGBM) {
+        var result = this.prefilterEnvMap(envMap, decodeRGBM);
         var self = this;
-        this._rootNode.traverse(function (node) {
+        this._scene.traverse(function (node) {
             if (node.material) {
                 node.material.shader.enableTexture('environmentMap');
                 node.material.shader.enableTexture('brdfLookup');
@@ -439,24 +478,11 @@ class ViewMain {
             }
         });
 
-        this.render();
-    }
+        this._envProbe.material.set('environmentMap', result.environmentMap);
 
-    updateShader (enabledTextures, material) {
-        enabledTextures = enabledTextures.concat(['environmentMap', 'brdfLookup', 'ssaoMap']);
-        // enabledTextures = enabledTextures.concat(['ssaoMap']);
-        var shader = qtek.shader.library.get('qtek.standard', {
-            textures: enabledTextures,
-            fragmentDefines: {
-                ENVIRONMENTMAP_PREFILTER: null,
-                RGBM_ENCODE: null,
-                USE_METALNESS: null,
-                SRGB_DECODE: null
-            }
-        });
-        if (shader !== material.shader) {
-            material.attachShader(shader, true);
-        }
+        this._ambientLight.coefficients = qtek.util.sh.projectEnvironmentMap(this._renderer, result.environmentMap);
+
+        this.render();
     }
 
     setSsaoParameter (name, value) {
@@ -467,6 +493,7 @@ class ViewMain {
             return;
         }
         this._ssaoPass.setParameter(name, value);
+        this.render();
     }
 
     setSsrParameter (name, value) {
@@ -477,13 +504,22 @@ class ViewMain {
             return;
         }
         this._ssrPass.setParameter(name, value);
+        this.render();
     }
 
-    prefilterEnvMap (envMap) {
+    setDofParameter (name, value) {
+        if (name === 'focalDist' || name === 'fstop' || name === 'focalRange') {
+            this._cocNode.setParameter(name, value);
+            this.render();
+        }
+    }
+
+    prefilterEnvMap (envMap, decodeRGBM) {
         return qtek.util.cubemap.prefilterEnvironmentMap(
             this._renderer, envMap, {
                 width: 128,
-                height: 128
+                height: 128,
+                decodeRGBM: decodeRGBM
                 // type: qtek.Texture.UNSIGNED_BYTE
             }
         );
