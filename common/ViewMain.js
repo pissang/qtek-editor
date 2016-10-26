@@ -17,7 +17,8 @@ class ViewMain {
         var renderer = new qtek.Renderer({
             canvas: document.createElement('canvas'),
             devicePixelRatio: 1,
-            color: [250 / 255, 214 / 255, 165 / 255, 0.2]
+            color: [1, 1, 1, 0.2]
+            // color: [250 / 255, 214 / 255, 165 / 255, 0.2]
         });
 
         var camera = new qtek.camera.Perspective();
@@ -159,7 +160,8 @@ class ViewMain {
             castShadow: true,
             shadowBias: 0.005,
             shadowResolution: 2048,
-            color: [250 / 255, 214 / 255, 165 / 255]
+            color: [1, 1, 1]
+            // color: [250 / 255, 214 / 255, 165 / 255]
         });
         mainLight.position.set(-5, 7, -18);
         mainLight.lookAt(scene.position);
@@ -187,7 +189,8 @@ class ViewMain {
             range: 8,
             intensity: 1,
             castShadow: false,
-            color: [250 / 255, 214 / 255, 165 / 255]
+            color: [1, 1, 1]
+            // color: [250 / 255, 214 / 255, 165 / 255]
         });
         pointLight.position.y = 1;
         pointLight.position.z = 0;
@@ -305,12 +308,14 @@ class ViewMain {
         scene.update();
         camera.update();
         this._gBuffer.update(renderer, scene, camera);
+
         if (this.enableSsao) {
             this._ssaoPass.render(renderer, camera);
         }
         else {
             this._ssaoPass.clear(renderer);
         }
+
         this._shadowMapPass.render(renderer, scene, camera);
         this._colorFb.attach(renderer.gl, this._colorTex);
         this._colorFb.bind(renderer);
@@ -348,6 +353,7 @@ class ViewMain {
     resize () {
         var width = this._dom.clientWidth;
         var height = this._dom.clientHeight;
+
         this._renderer.resize(width, height);
         this._camera.aspect = this._renderer.getViewportAspect();
 

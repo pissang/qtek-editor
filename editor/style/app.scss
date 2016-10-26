@@ -1,9 +1,13 @@
+@import 'font';
+
+* {
+    font-family: Helvetica Neue;
+    user-select: none;
+}
 html, body {
     height: 100%;
     margin: 0;
     background-color: #222;
-
-    font-family: Helvetica Neue;
 }
 
 ::-webkit-scrollbar {
@@ -39,6 +43,8 @@ html, body {
     .left {
         float: left;
         width: 20%;
+        border-right: 1px solid #333;
+        box-sizing: border-box;
     }
 
     .center {
@@ -61,6 +67,8 @@ html, body {
     .right {
         float: left;
         width: 20%;
+        border-left: 1px solid #333;
+        box-sizing: border-box;
     }
 }
 
@@ -112,13 +120,7 @@ html, body {
     }
 }
 
-#inspector, #scene {
-    h5 {
-        color: #aaa;
-        font-size: 20px;
-        margin: 10px 20px;
-    }
-
+#inspector, #render {
     .row {
         padding: 5px 10px;
 
@@ -151,6 +153,17 @@ html, body {
 
             display: block;
             margin-bottom: 3px;
+
+            text-transform: uppercase;
+        }
+    }
+}
+
+#render {
+    .ui-panel-header {
+        h5, input[type=checkbox] {
+            display: inline-block;
+            vertical-align: middle;
         }
     }
 }

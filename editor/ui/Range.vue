@@ -1,5 +1,5 @@
 <template>
-<div class="property-range">
+<div class="ui-property-range">
     <input type="range" :step="option.step" :min="option.min" :max="option.max" v-model="value">
     <input type="text" v-model="value" lazy  number>
 </div>
@@ -28,7 +28,7 @@ module.exports = {
 
 <style lang="sass">
 
-.property-range {
+.ui-property-range {
     input {
         vertical-align: middle;
         display: inline-block;

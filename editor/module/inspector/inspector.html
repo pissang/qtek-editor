@@ -1,9 +1,10 @@
 <div id="inspector">
-    <h5>Inspector</h5>
-    <div class="rows">
-        <div class="row" v-for="(index, item) in inspectorMaterial">
-            <label>{{item.title}}</label>
-            <component :is="item.type" :value.sync="item.value" :option="item"></component>
+    <panel title="Inspector">
+        <div slot="body" class="rows">
+            <div class="row" v-for="(index, item) in inspectorMaterial">
+                <label>{{item.title}}</label>
+                <component :is="item.type" :value.sync="item.value" :option="item"></component>
+            </div>
         </div>
-    </div>
+    </panel>
 </div>

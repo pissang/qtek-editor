@@ -1,8 +1,8 @@
 <template>
-<div class="property-texture">
-    <div :class="['property-texture-upload-container', value ? '' : 'empty']">
+<div class="ui-property-texture">
+    <div :class="['ui-property-texture-upload-container', value ? '' : 'empty']">
         <img :src="value ? (option.textureRootPath + '/' + value ) : 'editor/img/chessboard.jpg'">
-        <div class="property-texture-upload">UPLOAD</div>
+        <div class="ui-property-texture-upload">UPLOAD</div>
     </div>
     <button @click="clear">清除</button>
 </div>
@@ -29,7 +29,7 @@ module.exports = {
     },
     ready () {
         var self = this;
-        this.$el.querySelector('.property-texture-upload').addEventListener('click', function () {
+        this.$el.querySelector('.ui-property-texture-upload').addEventListener('click', function () {
             var $input = $('<input type="file" />');
             $input[0].addEventListener('change', function (e) {
                 var file = e.target.files[0];
@@ -49,10 +49,10 @@ module.exports = {
 </script>
 
 <style lang="sass">
-.property-texture {
+.ui-property-texture {
     min-height: 50px;
 
-    .property-texture-upload-container {
+    .ui-property-texture-upload-container {
         position: relative;
         img {
             max-width: 100%;
@@ -66,7 +66,7 @@ module.exports = {
         }
     }
 
-    .property-texture-upload {
+    .ui-property-texture-upload {
         line-height: 100%;
         font-size: 20px;
         color: rgba(255, 255, 255, 0.7);
