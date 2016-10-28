@@ -48,17 +48,19 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width)",
-                        "height" : "expr(height)"
+                        "width" : "expr(width / 2)",
+                        "height" : "expr(height / 2)"
                     }
                 }
             },
             "parameters" : {
                 "threshold" : 4,
-                "scale": 4
+                "scale": 4,
+                "textureSize": "expr([width / 2, height / 2])"
             },
             "defines": {
-                "RGBM": null
+                "RGBM": null,
+                "ANTI_FLICKER": null
             }
         },
 
@@ -853,10 +855,7 @@
             "shader": "#source(qtek.compositor.lut)",
             "type": "filter",
             "inputs": {
-                "texture": {
-                    "node": "tonemapping",
-                    "pin": "color"
-                }
+                "texture": "tonemapping"
             },
             "outputs": {
                 "color" : {
@@ -870,12 +869,8 @@
         {
             "name": "vignette",
             "shader": "#source(qtek.compositor.vignette)",
-            "type": "filter",
             "inputs": {
-                "texture": {
-                    "node": "tonemapping",
-                    "pin": "color"
-                }
+                "texture": "lut"
             },
             "outputs": {
                 "color" : {
@@ -892,13 +887,9 @@
         },
         {
             "name" : "FXAA",
-            "shader" : "#source(qtek.compositor.fxaa)",
-            "type" : "filter",
+            "shader" : "#source(qtek.compositor.fxaa3)",
             "inputs" : {
-                "texture" : {
-                    "node" : "vignette",
-                    "pin" : "color"
-                }
+                "texture" : "vignette"
             },
             "parameters": {
                 "viewportSize": "expr( [width, height] )"

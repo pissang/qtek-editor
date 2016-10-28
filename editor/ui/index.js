@@ -5,5 +5,6 @@ import Range from './Range.vue';
 import String from './String.vue';
 import Texture from './Texture.vue';
 import Panel from './Panel.vue';
+import Tree from './Tree.vue';
 
-export { Color, Number, Range, String, Texture, Panel };
+export { Color, Number, Range, String, Texture, Panel, Tree };

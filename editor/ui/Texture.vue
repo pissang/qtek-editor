@@ -11,7 +11,7 @@
 <script>
 
 // var defaultImg = 'editor/img/chessboard.jpg';
-module.exports = {
+export default {
     props: {
         value: {
             type: String,

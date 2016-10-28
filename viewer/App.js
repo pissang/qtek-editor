@@ -11,7 +11,7 @@ export default {
     ready () {
         var viewRoot = this.$el.querySelector('.view-main');
         var viewMain = this._viewMain = new ViewMain(viewRoot);
-        var scene = this._scene = new Scene(viewMain, {
+        var sceneLevel = this._sceneLevel = new Scene(viewMain, {
             textureRootPath: 'asset/model/kitchen/texture/'
         });
 
@@ -29,7 +29,7 @@ export default {
             playClip(1);
         }
 
-        scene.loadModel('asset/model/kitchen/kitchen-mod.gltf')
+        sceneLevel.loadModel('asset/model/kitchen/kitchen-mod.gltf')
             .then(function (rootNode) {
                 viewMain.loadPanorama('http://' + window.location.host + '/baidu-screen/asset/texture/hall.hdr', -0.5, function () {
                     viewMain.updateEnvProbe();
@@ -37,9 +37,8 @@ export default {
                 rootNode.rotation.rotateX(-Math.PI / 2);
 
                 $.getJSON('asset/model/kitchen/mat-mod.json').then(function (config) {
-                    scene.loadConfig(config);
-
-                    viewMain.loadCameraAnimation('asset/model/kitchen/camera01-05.gltf')
+                    sceneLevel.loadConfig(config);
+                    sceneLevel.loadCameraAnimation('asset/model/kitchen/camera01-05.gltf')
                         .then(function (clips) {
                             var clipsArr = [];
                             for (var name in clips) {

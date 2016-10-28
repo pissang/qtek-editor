@@ -143,7 +143,7 @@ class ViewMain {
             flipY: false
         });
         self._sourceNode = self._compositor.getNodeByName('source');
-        lutTex.load('asset/texture/lut/filmstock_50.png')
+        lutTex.load('asset/texture/lut.png')
             .success(function () {
                 self.render();
             });
@@ -270,6 +270,10 @@ class ViewMain {
         return this._camera;
     }
 
+    getScene () {
+        return this._scene;
+    }
+
     switchFreeCamera (isFree) {
         var enabledControl = isFree ? this._firstPersonControl : this._orbitControl;
         var disabledControl = isFree ? this._orbitControl : this._firstPersonControl;
@@ -362,19 +366,6 @@ class ViewMain {
         this._colorTex.dirty();
 
         this.render();
-    }
-
-    loadCameraAnimation (url) {
-        var loader = new qtek.loader.GLTF();
-        var self = this;
-        return new Promise(function (resolve, reject) {
-            loader.load(url);
-            loader.success(function (result) {
-                resolve(result.clips);
-            }).error(function () {
-                reject();
-            });
-        });
     }
 
     playCameraAnimation (clip) {

@@ -54,6 +54,8 @@ html, body {
         display: flex;
         flex-direction: column;
 
+        overflow: hidden;
+
         .top {
             flex-grow: 1;
             display: flex;

@@ -46,7 +46,9 @@ class Scene {
     }
 
     loadModel (url) {
-        var rootNode = new qtek.Node();
+        var rootNode = new qtek.Node({
+            name: url.split('/').pop()
+        });
         var loader = new qtek.loader.GLTF({
             rootNode: rootNode
         });
@@ -59,6 +61,18 @@ class Scene {
             loader.success(function () {
                 self._viewMain.addModel(rootNode);
                 resolve(rootNode);
+            }).error(function () {
+                reject();
+            });
+        });
+    }
+
+    loadCameraAnimation (url) {
+        var loader = new qtek.loader.GLTF();
+        return new Promise(function (resolve, reject) {
+            loader.load(url);
+            loader.success(function (result) {
+                resolve(result.clips);
             }).error(function () {
                 reject();
             });
@@ -119,6 +133,38 @@ class Scene {
         mat.set('uvRepeat', [+config.uvRepeat0 || 1, +config.uvRepeat1 || 1]);
 
         this._viewMain.render();
+    }
+
+    getMaterialConfig (material) {
+        var config = {
+            name: material.name
+        };
+
+        SIMPLE_PROPERTIES.forEach(function (propName) {
+            var val = material.get(propName);
+            if (COLOR_PROPERTIES.indexOf(propName) >= 0) {
+                val = stringifyColor(val);
+            }
+            config[propName] = val;
+        });
+
+        TEXTURE_PROPERTIES.forEach(function (propName) {
+            var texture = material.get(propName);
+            if (texture && texture.image && texture.image.src) {
+                config[propName] = texture.image.src.split('/').pop();
+            }
+            else {
+                config[propName] = '';
+            }
+        });
+
+        var uvRepeat = material.get('uvRepeat');
+        if (uvRepeat) {
+            config.uvRepeat0 = uvRepeat[0];
+            config.uvRepeat1 = uvRepeat[1];
+        }
+
+        return config;
     }
 
     _updateShader (mat, enabledTextures) {
@@ -193,7 +239,44 @@ class Scene {
             });
         }
 
-        return materialMap
+        return materialMap;
+    }
+
+    getSceneTree () {
+        var tree = this._buildTree(this._viewMain.getScene());
+        return tree;
+    }
+
+    _buildTree (node) {
+        var root = {};
+
+        function buildTree(parent, scope) {
+            scope.name = parent.name;
+            if (parent instanceof qtek.Light) {
+                scope.type = 'light';
+            }
+            else if (parent instanceof qtek.Camera) {
+                scope.type = 'camera';
+            }
+            else if (parent instanceof qtek.Mesh) {
+                scope.type = 'mesh';
+            }
+            else if (parent instanceof qtek.particleSystem.ParticleRenderable) {
+                scope.type = 'particle';
+            }
+            else {
+                scope.type = 'node';
+            }
+
+            scope.children = [];
+            parent.eachChild(function (child, idx) {
+                buildTree(child, scope.children[idx] = {});
+            });
+        }
+
+        buildTree(node, root);
+
+        return root;
     }
 }
 

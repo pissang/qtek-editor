@@ -15,16 +15,16 @@ export default {
         var viewMain = this._viewMain = new ViewMain(viewRoot, {
             enablePicking: true
         });
-        var scene = this._scene = new Scene(viewMain, {
+        var sceneLevel = this._sceneLevel = new Scene(viewMain, {
             textureRootPath: store.textureRootPath
         });
         var self = this;
 
-        // scene.loadModel('asset/model/bmps/bmps.gltf')
-        // scene.loadModel('asset/model/tronCycle/tronCycle.gltf')
-        scene.loadModel('asset/model/kitchen/kitchen-mod.gltf')
-        // scene.loadModel('asset/model/kitchen/sofa.gltf')
-        // scene.loadModel('asset/model/watch/watch.gltf')
+        // sceneLevel.loadModel('asset/model/bmps/bmps.gltf')
+        // sceneLevel.loadModel('asset/model/tronCycle/tronCycle.gltf')
+        sceneLevel.loadModel('asset/model/kitchen/kitchen-mod.gltf')
+        // sceneLevel.loadModel('asset/model/kitchen/sofa.gltf')
+        // sceneLevel.loadModel('asset/model/watch/watch.gltf')
             .then(function (rootNode) {
                 rootNode.rotation.rotateX(-Math.PI / 2);
 
@@ -38,7 +38,7 @@ export default {
                     viewMain.updateEnvProbe();
                 });
 
-                viewMain.loadCameraAnimation('asset/model/kitchen/camera01-05.gltf')
+                sceneLevel.loadCameraAnimation('asset/model/kitchen/camera01-05.gltf')
                     .then(function (clips) {
                         var clipsArr = [];
                         for (var name in clips) {
@@ -48,6 +48,8 @@ export default {
                         }
                         self._clips = clipsArr;
                     });
+
+                store.sceneTree.root = sceneLevel.getSceneTree();
             });
 
         window.addEventListener('resize', function () { viewMain.resize(); });
@@ -67,36 +69,13 @@ export default {
             return obj;
         }, {});
 
-        var simpleProperties = ['color', 'glossiness', 'alpha', 'metalness', 'emission', 'emissionIntensity'];
-        var textureProperies = ['diffuseMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap'];
-
         function inspectMaterial(mesh) {
-            var material = mesh.material;
-            inspectorMaterialMap.materialId.value = material.name;
+            var config = sceneLevel.getMaterialConfig(mesh.material);
 
-            simpleProperties.forEach(function (prop) {
-                var val = material.get(prop);
-                if (inspectorMaterialMap[prop].type === 'color') {
-                    val = stringifyColor(val);
+            for (var name in config) {
+                if (inspectorMaterialMap[name]) {
+                    inspectorMaterialMap[name].value = config[name];
                 }
-                inspectorMaterialMap[prop].value = val;
-            });
-
-            textureProperies.forEach(function (name) {
-                var texture = material.get(name);
-                if (texture && texture.image && texture.image.src) {
-                    inspectorMaterialMap[name].value =
-                        texture.image.src.split('/').pop();
-                }
-                else {
-                    inspectorMaterialMap[name].value = '';
-                }
-            });
-
-            var uvRepeat = material.get('uvRepeat');
-            if (uvRepeat) {
-                inspectorMaterialMap.uvRepeat0.value = uvRepeat[0];
-                inspectorMaterialMap.uvRepeat1.value = uvRepeat[1];
             }
 
             this._currentMesh = mesh;
@@ -111,26 +90,12 @@ export default {
             for (var name in inspectorMaterialMap) {
                 config[name] = inspectorMaterialMap[name].value;
             }
-            scene.setMaterial(currentMaterial, config);
+            sceneLevel.setMaterial(currentMaterial, config);
         }, { deep: true });
 
 
-        function stringifyColor(colorArr) {
-            if (typeof colorArr === 'string') {
-                return colorArr;
-            }
-            return '#' + colorUtil.toHex(colorUtil.stringify(
-                [
-                    Math.round(colorArr[0] * 255),
-                    Math.round(colorArr[1] * 255),
-                    Math.round(colorArr[2] * 255)
-                ],
-                'rgb'
-            ));
-        }
-
         function saveLocal() {
-            var materialMap = scene.exportMaterials();
+            var materialMap = sceneLevel.exportMaterials();
             var ssao = {};
             for (var name in store.ssao) {
                 ssao[name] = store.ssao[name].value;
@@ -180,7 +145,7 @@ export default {
                 }
             }
 
-            scene.loadConfig(config);
+            sceneLevel.loadConfig(config);
         }
 
         function updateSsaoParameter() {
@@ -223,9 +188,10 @@ export default {
             viewMain.render();
         });
 
+        var self = this;
         // https://github.com/jeresig/jquery.hotkeys
-        $(document).bind('keydown', 'ctrl+s', function () {
-            saveLocal();
+        $(document).bind('keydown', 'f', function () {
+            viewMain.focusOn(self._currentMesh);
         });
     },
 

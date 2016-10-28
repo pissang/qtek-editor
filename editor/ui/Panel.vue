@@ -1,19 +1,19 @@
 <template>
 <div class="ui-panel">
-    <div class="ui-panel-header" @click="toggleCollapse">
-        <span :class="['icon', collapse ? 'icon-unfold' : 'icon-fold']"></span>
+    <div class="ui-panel-header">
+        <span :class="['icon', collapsed ? 'icon-unfold' : 'icon-fold']" @click="toggleCollapsed"></span>
         <slot name="header">
             <h4 title="{{ title }}">{{ title }}</h4>
         </slot>
     </div>
-    <div :class="['ui-panel-body', collapse ? 'collapse' : '']">
+    <div :class="['ui-panel-body', collapsed ? 'collapsed' : '']">
         <slot name="body"></slot>
     </div>
 </div>
 </template>
 
 <script>
-module.exports = {
+export default {
     props: {
         title: {
             type: String,
@@ -23,13 +23,13 @@ module.exports = {
 
     data () {
         return {
-            collapse: false
+            collapsed: false
         }
     },
 
     methods: {
-        toggleCollapse () {
-            this.collapse = !this.collapse;
+        toggleCollapsed () {
+            this.collapsed = !this.collapsed;
         }
     }
 };
@@ -76,7 +76,7 @@ module.exports = {
 .ui-panel-body {
     padding: 5px 4px;
 
-    &.collapse {
+    &.collapsed {
         height: 0;
         overflow: hidden;
         padding: 0;

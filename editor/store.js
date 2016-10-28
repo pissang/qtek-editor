@@ -88,6 +88,12 @@ var store = {
         rotation: null
     },
 
+    // Scene tree
+    sceneTree: {
+        selected: '',
+        root: null
+    },
+
     ssao: {
         radius: new RangeType('radius', 'Radius', 0.5, 0, 2, 0.005),
         kernelSize: new RangeType('kernelSize', 'Kernel Size', 64, 1, 256, 1),
