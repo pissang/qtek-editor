@@ -14,6 +14,9 @@
 
 <script>
 export default {
+
+    name: 'panel',
+
     props: {
         title: {
             type: String,

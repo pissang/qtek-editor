@@ -16,9 +16,7 @@ class ViewMain {
 
         var renderer = new qtek.Renderer({
             canvas: document.createElement('canvas'),
-            devicePixelRatio: 1,
-            color: [1, 1, 1, 0.2]
-            // color: [250 / 255, 214 / 255, 165 / 255, 0.2]
+            devicePixelRatio: 1
         });
 
         var camera = new qtek.camera.Perspective();
@@ -58,11 +56,13 @@ class ViewMain {
         this._ssrPass = new SSRPass({
             gBuffer: this._gBuffer,
             renderToTexture: true,
-            RGBM: true
+            RGBM_ENCODE: true
         });
 
         this._colorFb = new qtek.FrameBuffer();
-        this._colorTex = new qtek.Texture2D();
+        this._colorTex = new qtek.Texture2D({
+            type: qtek.Texture.HALF_FLOAT
+        });
 
         this._shadowMapPass = new qtek.prePass.ShadowMap({
             shadowCascade: 2,
@@ -82,6 +82,7 @@ class ViewMain {
 
     addModel (rootNode) {
         var self = this;
+        var ssaoMap = this._ssaoPass.getTargetTexture();
         rootNode.traverse(function (mesh) {
             var geometry = mesh.geometry;
             if (geometry) {
@@ -91,11 +92,17 @@ class ViewMain {
                     viewSize[0] = self._renderer.getWidth();
                     viewSize[1] = self._renderer.getHeight();
                     mesh.material.set('viewportSize', viewSize);
+                    mesh.material.shader.define('fragment', 'SSAOMAP_ENABLED');
+                    mesh.material.set('ssaoMap', ssaoMap);
                 };
                 if (geometry.attributes.texcoord0.value) {
                     geometry.generateTangents();
                 }
-                // generateUv(geometry);
+                mesh.material = new qtek.StandardMaterial({
+                    name: mesh.material.name,
+                    linear: true,
+                    environmentMapPrefiltered: true
+                });
             }
         });
         this._scene.add(rootNode);
@@ -109,18 +116,14 @@ class ViewMain {
     addEnvProbe (position) {
         var sphere = new qtek.Mesh({
             geometry: new qtek.geometry.Sphere(),
-            material: new qtek.Material({
-                shader: qtek.shader.library.get('qtek.standard', {
-                    textures: ['environmentMap'],
-                    fragmentDefines: {
-                        USE_METALNESS: true
-                    }
-                })
+            material: new qtek.StandardMaterial({
+                color: [1, 1, 1],
+                roughness: 0,
+                metalness: 1,
+                environmentMapPrefiltered: true,
+                linear: true
             })
         });
-        sphere.material.set('glossiness', 1);
-        sphere.material.set('metalness', 1);
-        sphere.material.set('metal', 1);
         sphere.scale.set(0.2, 0.2, 0.2);
 
         sphere.position.setArray(position);
@@ -166,14 +169,6 @@ class ViewMain {
         mainLight.position.set(-5, 7, -18);
         mainLight.lookAt(scene.position);
         scene.add(mainLight);
-
-        // var fillLight = new qtek.light.Directional({
-        //     intensity: 0.4,
-        //     castShadow: false
-        // });
-        // fillLight.position.set(10, 10, 10);
-        // fillLight.lookAt(scene.position);
-        // scene.add(fillLight);
 
         var ambientLight = new qtek.light.AmbientSH({
             // Init coefficients
@@ -330,18 +325,22 @@ class ViewMain {
             this._ssrPass.render(renderer, camera, this._colorTex, this._ssaoPass.getTargetTexture());
             if (this._sourceNode) {
                 this._sourceNode.texture = this._ssrPass.getTargetTexture();
+                this._sourceNode.shaderDefine('RGBM');
+                this._sourceNode.shaderUnDefine('RGBM_ENCODE');
             }
         }
         else {
             if (this._sourceNode) {
                 this._sourceNode.texture = this._colorTex;
+                this._sourceNode.shaderUnDefine('RGBM');
+                this._sourceNode.shaderDefine('RGBM_ENCODE');
             }
         }
 
         this._cocNode.setParameter('depth', this._gBuffer.getDepthTex());
         this._compositor.render(renderer);
 
-        // this._debugPass.setUniform('texture', this._ssrPass._ssrPass.getTargetTexture());
+        // this._debugPass.setUniform('texture', this._colorTex);
         // this._debugPass.render(renderer);
         // this._shadowMapPass.renderDebug(renderer);
 
@@ -433,10 +432,10 @@ class ViewMain {
                 cb && cb();
             }
         );
-        // var skydome = new qtek.plugin.Skydome({
-        //     scene: this._scene
-        // });
-        // skydome.material.set('diffuseMap', envMap);
+        var skydome = new qtek.plugin.Skydome({
+            scene: this._scene
+        });
+        skydome.material.set('diffuseMap', envMap);
 
     }
 
@@ -461,21 +460,22 @@ class ViewMain {
     }
 
     setEnvMap (envMap, decodeRGBM) {
-        var result = this.prefilterEnvMap(envMap, decodeRGBM);
-        var self = this;
+        var result = qtek.util.cubemap.prefilterEnvironmentMap(
+            this._renderer, envMap, {
+                width: 128,
+                height: 128,
+                decodeRGBM: decodeRGBM
+                // type: qtek.Texture.UNSIGNED_BYTE
+            }
+        );
         this._scene.traverse(function (node) {
             if (node.material) {
-                node.material.shader.enableTexture('environmentMap');
-                node.material.shader.enableTexture('brdfLookup');
-                node.material.shader.enableTexture('ssaoMap');
-                node.material.set('environmentMap', result.environmentMap);
-                node.material.set('brdfLookup', result.brdfLookup);
-                node.material.set('maxMipmapLevel', result.maxMipmapLevel - 2);
-                node.material.set('ssaoMap', self._ssaoPass.getTargetTexture());
+                node.material.environmentMap = result.environmentMap;
+                node.material.brdfLookup = result.brdfLookup;
             }
         });
 
-        this._envProbe.material.set('environmentMap', result.environmentMap);
+        this._envProbe.material.environmentMap = result.environmentMap;
 
         this._ambientLight.coefficients = qtek.util.sh.projectEnvironmentMap(this._renderer, result.environmentMap);
 
@@ -509,17 +509,6 @@ class ViewMain {
             this._cocNode.setParameter(name, value);
             this.render();
         }
-    }
-
-    prefilterEnvMap (envMap, decodeRGBM) {
-        return qtek.util.cubemap.prefilterEnvironmentMap(
-            this._renderer, envMap, {
-                width: 128,
-                height: 128,
-                decodeRGBM: decodeRGBM
-                // type: qtek.Texture.UNSIGNED_BYTE
-            }
-        );
     }
 }
 

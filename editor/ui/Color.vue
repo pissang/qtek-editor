@@ -7,6 +7,9 @@
 
 <script>
 export default {
+
+    name: 'color',
+
     props: {
         value: {
             type: String,

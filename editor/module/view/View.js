@@ -34,7 +34,7 @@ export default {
 
                 loadLocal();
 
-                viewMain.loadPanorama('asset/texture/hall.hdr', -0.6, function () {
+                viewMain.loadPanorama('asset/texture/Mans_Outside_2k.hdr', -0.5, function () {
                     viewMain.updateEnvProbe();
                 });
 

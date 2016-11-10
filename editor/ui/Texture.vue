@@ -12,6 +12,9 @@
 
 // var defaultImg = 'editor/img/chessboard.jpg';
 export default {
+
+    name: 'texture',
+
     props: {
         value: {
             type: String,

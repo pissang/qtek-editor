@@ -7,6 +7,9 @@
 
 <script>
 export default {
+
+    name: 'range',
+
     props: {
         value: {
             type: Number,

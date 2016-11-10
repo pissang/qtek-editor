@@ -38,6 +38,8 @@ varying vec2 v_Texcoord;
 @import qtek.util.decode_float
 #endif
 
+@import qtek.util.rgbm
+
 float fetchDepth(sampler2D depthTexture, vec2 uv)
 {
     vec4 depthTexel = texture2D(depthTexture, uv);
@@ -239,8 +241,6 @@ float calculateAlpha(
     return alpha;
 }
 
-@import qtek.util.rgbm
-
 void main()
 {
     vec4 normalAndGloss = texture2D(normalTex, v_Texcoord);
@@ -389,9 +389,16 @@ varying vec2 v_Texcoord;
 
 void main()
 {
+    vec4 sourceTexel = texture2D(colorTex, v_Texcoord);
+
+#ifdef SOURCE_RGBM_DECODE
+    sourceTexel = decodeHDR(sourceTexel);
+#else
+    sourceTexel.a = 1.0;
+#endif
+
     gl_FragColor = encodeHDR(
-        decodeHDR(texture2D(ssrTex, v_Texcoord)) * texture2D(ssaoTex, v_Texcoord).r
-        + decodeHDR(texture2D(colorTex, v_Texcoord))
+        decodeHDR(texture2D(ssrTex, v_Texcoord)) * texture2D(ssaoTex, v_Texcoord).r + sourceTexel
     );
 }
 

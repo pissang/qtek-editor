@@ -17,7 +17,8 @@ export default {
 
         function playAnimationSequerence(clips) {
             function randomClipIndex(lastIndex) {
-                return (lastIndex + Math.round(Math.random()) + 1) % clips.length;
+                return (lastIndex + 1) & clips.length;
+                // return (lastIndex + Math.round(Math.random()) + 1) % clips.length;
             }
             function playClip(clipIndex) {
                 var clip = clips[clipIndex];
@@ -26,12 +27,12 @@ export default {
                 };
                 viewMain.playCameraAnimation(clip);
             }
-            playClip(1);
+            playClip(0);
         }
 
         sceneLevel.loadModel('asset/model/kitchen/kitchen-mod.gltf')
             .then(function (rootNode) {
-                viewMain.loadPanorama('http://' + window.location.host + '/baidu-screen/asset/texture/hall.hdr', -0.5, function () {
+                viewMain.loadPanorama('asset/texture/Mans_Outside_2k.hdr', -0.5, function () {
                     viewMain.updateEnvProbe();
                 });
                 rootNode.rotation.rotateX(-Math.PI / 2);

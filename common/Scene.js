@@ -2,7 +2,7 @@
 import qtek from 'qtek';
 import colorUtil from 'zrender/lib/tool/color';
 
-var SIMPLE_PROPERTIES = ['color', 'glossiness', 'alpha', 'metalness', 'emission', 'emissionIntensity'];
+var SIMPLE_PROPERTIES = ['color', 'roughness', 'alpha', 'metalness', 'emission', 'emissionIntensity', 'uvRepeat'];
 var TEXTURE_PROPERTIES = ['diffuseMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap'];
 var COLOR_PROPERTIES = ['color', 'emission'];
 
@@ -81,10 +81,6 @@ class Scene {
 
     setMaterial (mat, config) {
         var self = this;
-        var enabledTextures = TEXTURE_PROPERTIES.filter(function (name) {
-            return config[name];
-        });
-        this._updateShader(mat, enabledTextures);
 
         SIMPLE_PROPERTIES.forEach(function (prop) {
             var val = config[prop];
@@ -92,7 +88,7 @@ class Scene {
                 val = parseColor(val);
             }
             if (val != null) {
-                mat.set(prop, val);
+                mat[prop] = val;
             }
         });
 
@@ -105,11 +101,11 @@ class Scene {
             if (textureFileName) {
                 var path = this.textureRootPath + '/' + textureFileName;
                 if (this._textureCache[path]) {
-                    mat.set(name, this._textureCache[path]);
+                    mat[name] = this._textureCache[path];
                     return;
                 }
 
-                var texture = mat.get(name) || new qtek.Texture2D({
+                var texture = mat[name] || new qtek.Texture2D({
                     wrapS: qtek.Texture.REPEAT,
                     wrapT: qtek.Texture.REPEAT,
                     anisotropic: 8
@@ -121,16 +117,14 @@ class Scene {
                     self._viewMain.render();
                 });
                 // FIXME
-                mat.set(name, texture);
+                mat[name] = texture;
 
                 this._textureCache[path] = texture;
             }
             else {
-                mat.set(name, null);
+                mat[name] = null;
             }
         }, this);
-
-        mat.set('uvRepeat', [+config.uvRepeat0 || 1, +config.uvRepeat1 || 1]);
 
         this._viewMain.render();
     }
@@ -141,7 +135,7 @@ class Scene {
         };
 
         SIMPLE_PROPERTIES.forEach(function (propName) {
-            var val = material.get(propName);
+            var val = material[propName];
             if (COLOR_PROPERTIES.indexOf(propName) >= 0) {
                 val = stringifyColor(val);
             }
@@ -149,7 +143,7 @@ class Scene {
         });
 
         TEXTURE_PROPERTIES.forEach(function (propName) {
-            var texture = material.get(propName);
+            var texture = material[propName];
             if (texture && texture.image && texture.image.src) {
                 config[propName] = texture.image.src.split('/').pop();
             }
@@ -158,30 +152,9 @@ class Scene {
             }
         });
 
-        var uvRepeat = material.get('uvRepeat');
-        if (uvRepeat) {
-            config.uvRepeat0 = uvRepeat[0];
-            config.uvRepeat1 = uvRepeat[1];
-        }
+        config.uvRepeat = config.uvRepeat || [1, 1];
 
         return config;
-    }
-
-    _updateShader (mat, enabledTextures) {
-        enabledTextures = enabledTextures.concat(['environmentMap', 'brdfLookup', 'ssaoMap']);
-        enabledTextures = enabledTextures.concat(['ssaoMap']);
-        var shader = qtek.shader.library.get('qtek.standard', {
-            textures: enabledTextures,
-            fragmentDefines: {
-                ENVIRONMENTMAP_PREFILTER: null,
-                RGBM_ENCODE: null,
-                USE_METALNESS: null,
-                SRGB_DECODE: null
-            }
-        });
-        if (shader !== mat.shader) {
-            mat.attachShader(shader, true);
-        }
     }
 
     loadConfig (config) {
@@ -222,19 +195,14 @@ class Scene {
                 if (material) {
                     materialMap[material.name] = {};
                     SIMPLE_PROPERTIES.forEach(function (propName) {
-                        materialMap[material.name][propName] = material.get(propName);
+                        materialMap[material.name][propName] = material[propName];
                     });
                     TEXTURE_PROPERTIES.forEach(function (propName) {
-                        var tex = material.get(propName);
+                        var tex = material[propName];
                         if (tex && tex.image && tex.image.src) {
                             materialMap[material.name][propName] = tex.image.src.split('/').pop();
                         }
                     });
-                    var uvRepeat = material.get('uvRepeat');
-                    if (uvRepeat) {
-                        materialMap[material.name].uvRepeat0 = uvRepeat[0];
-                        materialMap[material.name].uvRepeat1 = uvRepeat[1];
-                    }
                 }
             });
         }

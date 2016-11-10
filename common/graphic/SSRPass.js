@@ -21,12 +21,17 @@ function SSRPass(opt) {
 
     this._blendPass.setUniform('ssrTex', this._blurPass2.getTargetTexture());
 
-    if (opt.RGBM) {
-        this._ssrPass.getShader().define('fragment', 'RGBM');
+    if (opt.RGBM_ENCODE || opt.RGBM) {
+        this._ssrPass.getShader().define('fragment', 'RGBM_ENCODE');
         this._blurPass1.getShader().define('fragment', 'RGBM');
         this._blurPass2.getShader().define('fragment', 'RGBM');
         this._blendPass.getShader().define('fragment', 'RGBM');
     }
+    if (opt.RGBM_DECODE || opt.RGBM) {
+        this._ssrPass.getShader().define('fragment', 'SOURCE_RGBM_DECODE');
+        this._ssrPass.getShader().define('fragment', 'RGBM_DECODE');
+    }
+
 
     this._width;
     this._height;

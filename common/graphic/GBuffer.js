@@ -117,8 +117,13 @@ GBuffer.prototype.update = function (renderer, scene, camera) {
     var defaultRougnessMap = this._defaultRoughnessMap;
     renderer.beforeRenderObject = function (renderable, prevMaterial) {
         var material = renderable.material;
-        // TODO Texture
-        var glossiness = material.get('glossiness');
+        var glossiness;
+        if (material.shader.isDefined('fragment', 'USE_ROUGHNESS')) {
+            glossiness = 1.0 - material.get('roughness');
+        }
+        else {
+            glossiness = material.get('glossiness');
+        }
         var normalMap = material.get('normalMap') || defaultNormalMap;
         var roughnessMap = material.get('roughnessMap');
         var uvRepeat = material.get('uvRepeat');

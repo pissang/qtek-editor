@@ -4,6 +4,9 @@
 
 <script>
 export default {
+
+    name: 'string',
+
     props: {
         value: {
             type: String,

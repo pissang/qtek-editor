@@ -58,7 +58,17 @@ function NumberType(name, title, val, step) {
         title: title,
         type: 'number',
         value: val || 0,
-        step: step || quantity(step) / 10
+        step: step || quantity(val) / 100
+    };
+}
+
+function VectorType(name, title, val, step) {
+    return {
+        name: name,
+        title: title,
+        type: 'vector',
+        value: val || [],
+        step: step || quantity(val[0]) / 100
     };
 }
 
@@ -128,15 +138,14 @@ var store = {
 
         new ColorType('color', 'Base Color', '#fff'),
         new RangeType('metalness', 'Metalness', 0, 0, 1),
-        new RangeType('glossiness', 'Glossiness', 0, 0, 1),
+        new RangeType('roughness', 'Roughness', 0, 0, 1),
 
         new RangeType('alpha', 'Alpha', 0, 0, 1),
 
         new ColorType('emission', 'Emission', '#000'),
         new RangeType('emissionIntensity', 'Emission Intensity', 0, 0, 50),
 
-        new NumberType('uvRepeat0', 'U Repeat', 1),
-        new NumberType('uvRepeat1', 'V Repeat', 1),
+        new VectorType('uvRepeat', 'UV Repeat', [1, 1]),
 
         new TextureType('diffuseMap', 'Diffuse Map'),
         new TextureType('normalMap', 'Normal Map'),
@@ -145,6 +154,10 @@ var store = {
         new TextureType('emissiveMap', 'Emissive Map')
 
         // new TextureType('environmentMap', 'Environment Map')
+    ],
+
+    inspectorMesh: [
+        new StringType('meshId', 'Mesh ID')
     ]
 };
 
