@@ -100,7 +100,6 @@ class ViewMain {
                 }
                 mesh.material = new qtek.StandardMaterial({
                     name: mesh.material.name,
-                    linear: true,
                     environmentMapPrefiltered: true
                 });
             }
@@ -119,9 +118,8 @@ class ViewMain {
             material: new qtek.StandardMaterial({
                 color: [1, 1, 1],
                 roughness: 0,
-                metalness: 1,
-                environmentMapPrefiltered: true,
-                linear: true
+                metalness: 1
+                // environmentMapPrefiltered: true
             })
         });
         sphere.scale.set(0.2, 0.2, 0.2);
@@ -319,6 +317,13 @@ class ViewMain {
         this._colorFb.attach(renderer.gl, this._colorTex);
         this._colorFb.bind(renderer);
         var renderStat = renderer.render(scene, camera, true, true);
+
+        if (this._skydome) {
+            renderer.renderQueue([this._skydome], camera);
+        }
+        // Render light probe
+        renderer.renderQueue([this._envProbe], camera);
+
         this._colorFb.unbind(renderer);
 
         if (this.enableSsr) {
@@ -344,9 +349,6 @@ class ViewMain {
         // this._debugPass.render(renderer);
         // this._shadowMapPass.renderDebug(renderer);
 
-        // Render light probe
-        renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT);
-        renderer.renderQueue([this._envProbe], camera);
 
         renderStat.renderTime = Date.now() - time;
 
@@ -425,18 +427,28 @@ class ViewMain {
             }, function (envMap) {
                 envMap.flipY = false;
 
-                self.setEnvMap(envMap);
-
                 self.render();
 
                 cb && cb();
             }
         );
-        var skydome = new qtek.plugin.Skydome({
-            scene: this._scene
+        // TODO Use box
+        var skydome = new qtek.Mesh({
+            geometry: new qtek.geometry.Sphere(),
+            material: new qtek.Material({
+                shader: qtek.shader.library.get('qtek.basic', ['diffuseMap'])
+            }),
+            // TODO Why skydome will be affected by shadow.
+            castShadow: false,
+            culling: false
         });
+        skydome.scale.set(15, 15, 15);
+        skydome.update();
         skydome.material.set('diffuseMap', envMap);
 
+        this._skydome = skydome;
+
+        return envMap;
     }
 
     updateEnvProbe () {
@@ -453,19 +465,17 @@ class ViewMain {
 
             envMapPass.render(this._renderer, this._scene);
 
-            this.setEnvMap(textureCube, true);
+            this.setEnvMap(textureCube);
 
             textureCube.dispose(this._renderer.gl);
         }
     }
 
-    setEnvMap (envMap, decodeRGBM) {
+    setEnvMap (envMap) {
         var result = qtek.util.cubemap.prefilterEnvironmentMap(
             this._renderer, envMap, {
                 width: 128,
-                height: 128,
-                decodeRGBM: decodeRGBM
-                // type: qtek.Texture.UNSIGNED_BYTE
+                height: 128
             }
         );
         this._scene.traverse(function (node) {

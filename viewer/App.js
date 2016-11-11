@@ -32,9 +32,8 @@ export default {
 
         sceneLevel.loadModel('asset/model/kitchen/kitchen-mod.gltf')
             .then(function (rootNode) {
-                viewMain.loadPanorama('asset/texture/Mans_Outside_2k.hdr', -0.5, function () {
-                    viewMain.updateEnvProbe();
-                });
+                viewMain.loadPanorama('asset/texture/Mans_Outside_2k.hdr', 0.5);
+                viewMain.updateEnvProbe();
                 rootNode.rotation.rotateX(-Math.PI / 2);
 
                 $.getJSON('asset/model/kitchen/mat-mod.json').then(function (config) {

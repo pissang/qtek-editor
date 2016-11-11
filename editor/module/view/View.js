@@ -34,9 +34,8 @@ export default {
 
                 loadLocal();
 
-                viewMain.loadPanorama('asset/texture/Mans_Outside_2k.hdr', -0.5, function () {
-                    viewMain.updateEnvProbe();
-                });
+                viewMain.loadPanorama('asset/texture/Mans_Outside_2k.hdr', 0.5);
+                viewMain.updateEnvProbe();
 
                 sceneLevel.loadCameraAnimation('asset/model/kitchen/camera01-05.gltf')
                     .then(function (clips) {
