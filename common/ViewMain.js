@@ -146,12 +146,20 @@ class ViewMain {
             useMipmap: false,
             flipY: false
         });
+        var lensflareTex = new qtek.Texture2D();
+        var lensdirtTex = new qtek.Texture2D();
         self._sourceNode = self._compositor.getNodeByName('source');
         lutTex.load('asset/texture/lut.png')
             .success(function () {
                 self.render();
             });
+
+        lensflareTex.load('asset/texture/lensflare/lenscolor.png').success(function () { self.render(); });
+        lensdirtTex.load('asset/texture/lensflare/lensdirt2.jpg').success(function () { self.render(); });
+
         this._compositor.getNodeByName('lut').setParameter('lookup', lutTex);
+        this._compositor.getNodeByName('lensflare').setParameter('lenscolor', lensflareTex);
+        this._compositor.getNodeByName('tonemapping').setParameter('lensdirt', lensdirtTex);
 
         this._cocNode = self._compositor.getNodeByName('coc');
     }
