@@ -22,6 +22,7 @@ export default {
             }
             function playClip(clipIndex) {
                 var clip = clips[clipIndex];
+                clip.playbackRate = 0.4;
                 clip.onfinish = function () {
                     playClip(randomClipIndex(clipIndex));
                 };
@@ -51,6 +52,11 @@ export default {
                     viewMain.render();
                 });
             });
+
+        // var audio = document.createElement('audio');
+        // audio.src = 'asset/sound/bensound-acousticbreeze.mp3';
+        // audio.autoplay = true;
+        // audio.loop = true;
 
         window.addEventListener('resize', function () { viewMain.resize(); });
     }

@@ -1,5 +1,7 @@
 <template>
-<input type="text" v-model="value">
+<div class="ui-property-string">
+    <input type="text" v-model="value">
+</div>
 </template>
 
 <script>

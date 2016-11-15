@@ -1,8 +1,22 @@
 <template>
 <div id="app">
     <div class="left">
-        <scene></scene>
-        <render></render>
+        <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation" class="active">
+                <a data-toggle="tab" href="#scene">Scene</a>
+            </li>
+            <li role="presentation">
+                <a data-toggle="tab" href="#render">Render</a>
+            </li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane active" role="tabpanel" id="scene">
+                <scene></scene>
+            </div>
+            <div class="tab-pane" role="tabpanel" id="render">
+                <render></render>
+            </div>
+        </div>
     </div>
     <div class="center">
         <div class="top">
@@ -11,17 +25,33 @@
         <div class="bottom">
         </div>
     </div>
-    <div class="right">
-        <inspector></inspector>
+    <div class="right" id="inspector">
+        <ul class="nav nav-tabs" role="tablist">
+            <li role="presentation" class="active">
+                <a data-toggle="tab" href="#entity">Entity</a>
+            </li>
+            <li role="presentation">
+                <a data-toggle="tab" href="#material">Material</a>
+            </li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane active" role="tabpanel" id="entity">
+                <object></object>
+            </div>
+            <div class="tab-pane" role="tabpanel" id="material">
+                <material></material>
+            </div>
+        </div>
     </div>
 </div>
 </template>
 
 <script>
 import View from './module/view/View.vue';
-import Inspector from './module/inspector/Inspector.vue';
 import Render from './module/render/Render.vue';
 import Scene from './module/scene/Scene.vue';
+import Entity from './module/entity/Entity.vue';
+import Material from './module/material/Material.vue';
 
 export default {
 
@@ -29,9 +59,10 @@ export default {
 
     components: {
         'view': View,
-        'inspector': Inspector,
+        'material': Material,
         'render': Render,
-        'scene': Scene
+        'scene': Scene,
+        'entity': Entity
     }
 };
 </script>

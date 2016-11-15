@@ -8,6 +8,8 @@
     </div>
     <div :class="['ui-panel-body', collapsed ? 'collapsed' : '']">
         <slot name="body"></slot>
+        <!-- Default slot -->
+        <slot></slot>
     </div>
 </div>
 </template>

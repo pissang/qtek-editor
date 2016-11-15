@@ -1,53 +1,51 @@
-<panel title="Render">
-    <div id="render" slot="body">
-        <div id="ssao">
-            <panel title="Screen Space Ambient Occulusion">
-                <div slot="header">
-                    <h5 title="Screen Space Ambient Occulusion">
-                        Screen Space Ambient Occulusion
-                    </h5>
-                    <input type="checkbox" v-model="enableSsao" />
+<div>
+    <div id="ssao">
+        <panel title="Screen Space Ambient Occulusion">
+            <div slot="header">
+                <h5 title="Screen Space Ambient Occulusion">
+                    Screen Space Ambient Occulusion
+                </h5>
+                <input type="checkbox" v-model="enableSsao" />
+            </div>
+            <div slot="body" class="property-rows">
+                <div class="property-row" v-for="(index, item) in ssao">
+                    <label>{{item.title}}</label>
+                    <component :is="item.type" :value.sync="item.value" :option="item"></component>
                 </div>
-                <div slot="body" class="rows">
-                    <div class="row" v-for="(index, item) in ssao">
-                        <label>{{item.title}}</label>
-                        <component :is="item.type" :value.sync="item.value" :option="item"></component>
-                    </div>
-                </div>
-            </panel>
-        </div>
-
-        <div id="ssr">
-            <panel>
-                <div slot="header">
-                    <h5 title="Screen Space Reflection">
-                        Screen Space Reflection
-                    </h5>
-                    <input type="checkbox" v-model="enableSsr" />
-                </div>
-                <div slot="body" class="rows">
-                    <div class="row" v-for="(index, item) in ssr">
-                        <label>{{item.title}}</label>
-                        <component :is="item.type" :value.sync="item.value" :option="item"></component>
-                    </div>
-                </div>
-            </panel>
-        </div>
-
-        <div id="dof">
-            <panel>
-                <div slot="header">
-                    <h5 title="Depth of Field">
-                        Depth of Field
-                    </h5>
-                </div>
-                <div slot="body" class="rows">
-                    <div class="row" v-for="(index, item) in dof">
-                        <label>{{item.title}}</label>
-                        <component :is="item.type" :value.sync="item.value" :option="item"></component>
-                    </div>
-                </div>
-            </panel>
-        </div>
+            </div>
+        </panel>
     </div>
-</panel>
+
+    <div id="ssr">
+        <panel>
+            <div slot="header">
+                <h5 title="Screen Space Reflection">
+                    Screen Space Reflection
+                </h5>
+                <input type="checkbox" v-model="enableSsr" />
+            </div>
+            <div slot="body" class="property-rows">
+                <div class="property-row" v-for="(index, item) in ssr">
+                    <label>{{item.title}}</label>
+                    <component :is="item.type" :value.sync="item.value" :option="item"></component>
+                </div>
+            </div>
+        </panel>
+    </div>
+
+    <div id="dof">
+        <panel>
+            <div slot="header">
+                <h5 title="Depth of Field">
+                    Depth of Field
+                </h5>
+            </div>
+            <div slot="body" class="property-rows">
+                <div class="property-row" v-for="(index, item) in dof">
+                    <label>{{item.title}}</label>
+                    <component :is="item.type" :value.sync="item.value" :option="item"></component>
+                </div>
+            </div>
+        </panel>
+    </div>
+</div>

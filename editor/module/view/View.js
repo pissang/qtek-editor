@@ -20,11 +20,7 @@ export default {
         });
         var self = this;
 
-        // sceneLevel.loadModel('asset/model/bmps/bmps.gltf')
-        // sceneLevel.loadModel('asset/model/tronCycle/tronCycle.gltf')
         sceneLevel.loadModel('asset/model/kitchen/kitchen-mod.gltf')
-        // sceneLevel.loadModel('asset/model/kitchen/sofa.gltf')
-        // sceneLevel.loadModel('asset/model/watch/watch.gltf')
             .then(function (rootNode) {
                 rootNode.rotation.rotateX(-Math.PI / 2);
 

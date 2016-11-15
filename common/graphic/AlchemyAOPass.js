@@ -61,13 +61,17 @@ function AlchemyAO(opt) {
 
     this._ssaoPass = new PostProcessPass(qtek.Shader.source('alchemy.fragment'), true, [1, 1, 1, 1]);
 
-    this._blurPass1 = new PostProcessPass(qtek.Shader.source('alchemy.blur_h'), true);
-    this._blurPass2 = new PostProcessPass(qtek.Shader.source('alchemy.blur_v'), opt.renderToTexture);
+    this._blurPass1 = new PostProcessPass(qtek.Shader.source('alchemy.blur'), true);
+    this._blurPass2 = new PostProcessPass(qtek.Shader.source('alchemy.blur'), opt.renderToTexture);
 
     this._blurPass1.setUniform('colorTex', this._ssaoPass.getTargetTexture());
-    this._blurPass1.setUniform('depthTex', this._gBuffer.getDepthTex());
+    this._blurPass1.setUniform('normalTex', this._gBuffer.getNormalTex());
     this._blurPass2.setUniform('colorTex', this._blurPass1.getTargetTexture());
-    this._blurPass2.setUniform('depthTex', this._gBuffer.getDepthTex());
+    this._blurPass2.setUniform('normalTex', this._gBuffer.getNormalTex());
+
+    this._blurPass1.getShader().enableTexture('normalTex');
+    this._blurPass2.getShader().enableTexture('normalTex');
+    this._blurPass2.getShader().define('fragment', 'DIRECTION', 1);
 
     this.setKernelSize(opt.kernelSize || 12);
     this.setParameter('blurSize', opt.blurSize || 1);

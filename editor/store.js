@@ -110,7 +110,6 @@ var store = {
         power: new RangeType('power', 'Power', 0.2, -5, 5, 0.01),
         scale: new RangeType('scale', 'Scale', 0.5, 0, 5, 0.01),
         blurSize: new RangeType('blurSize', 'Blur Size', 1, 0, 5),
-        edgeSharpness: new RangeType('epsilon', 'Edge Sharpness', 0.5, 0, 4),
         bias: new RangeType('bias', 'Bias', 5e-4, 1e-4, 2e-1),
         epsilon: new RangeType('epsilon', 'Epsilon', 0.1, 1e-3, 0.2)
     },
@@ -134,7 +133,7 @@ var store = {
     },
 
     inspectorMaterial: [
-        new StringType('materialId', 'Material ID'),
+        new StringType('name', 'Material ID'),
 
         new ColorType('color', 'Base Color', '#fff'),
         new RangeType('metalness', 'Metalness', 0, 0, 1),

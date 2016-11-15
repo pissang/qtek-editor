@@ -38,11 +38,14 @@ export default {
     }
     input[type=text] {
         width: 40px;
+        padding: 5px 3px;
     }
 
     input[type=range] {
         -webkit-appearance: none;
         cursor: pointer;
+        width: auto;
+        display: inline-block;
     }
 
     input[type=range]::-webkit-slider-runnable-track {
