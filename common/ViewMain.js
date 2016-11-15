@@ -83,6 +83,7 @@ class ViewMain {
     addModel (rootNode) {
         var self = this;
         var ssaoMap = this._ssaoPass.getTargetTexture();
+        var materialMap = {};
         rootNode.traverse(function (mesh) {
             var geometry = mesh.geometry;
             if (geometry) {
@@ -98,10 +99,12 @@ class ViewMain {
                 if (geometry.attributes.texcoord0.value) {
                     geometry.generateTangents();
                 }
-                mesh.material = new qtek.StandardMaterial({
+                var material = materialMap[mesh.material.name] || new qtek.StandardMaterial({
                     name: mesh.material.name,
                     environmentMapPrefiltered: true
                 });
+                materialMap[mesh.material.name] = material;
+                mesh.material = material;
             }
         });
         this._scene.add(rootNode);
@@ -438,7 +441,6 @@ class ViewMain {
             material: new qtek.Material({
                 shader: qtek.shader.library.get('qtek.basic', ['diffuseMap'])
             }),
-            // TODO Why skydome will be affected by shadow.
             castShadow: false,
             culling: false
         });

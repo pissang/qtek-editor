@@ -162,48 +162,18 @@ void main()
 
 
 
-@export alchemy.blur_h
+@export alchemy.blur
+
+// 0 horizontal, 1 vertical
+#define DIRECTION 0
 
 uniform sampler2D colorTex;
+
+#ifdef NORMALTEX_ENABLED
+uniform sampler2D normalTex;
+#elif defined(DEPTHTEX_ENABLED)
 uniform sampler2D depthTex;
-
-varying vec2 v_Texcoord;
-
-uniform vec2 textureSize;
-uniform float blurSize : 1.0;
-uniform float edgeSharpness: 1.0;
-
-void main()
-{
-    @import qtek.compositor.kernel.gaussian_13
-
-    vec4 centerDepthTexel = texture2D(depthTex, v_Texcoord);
-
-    float off = blurSize / textureSize.x;
-    vec2 coord = v_Texcoord;
-
-    vec4 sum = vec4(0.0);
-    float weightAll = 0.0;
-
-    float centerDepth = centerDepthTexel.r;
-    for (int i = 0; i < 13; i++) {
-        vec2 coord = vec2(clamp(v_Texcoord.x + (float(i) - 6.0) * off, 0.0, 1.0), v_Texcoord.y);
-        // Use depth in bilateral filter instead normal.
-        // Use normal will cause jitter in the corner.
-        float w = gaussianKernel[i] * max(0.0, 1.0 - edgeSharpness * 1000.0 * abs(centerDepth - texture2D(depthTex, coord).r));
-        weightAll += w;
-        sum += texture2D(colorTex, coord) * w;
-    }
-
-    gl_FragColor = sum / weightAll;
-}
-
-@end
-
-@export alchemy.blur_v
-
-uniform sampler2D colorTex;
-uniform sampler2D depthTex;
+#endif
 
 varying vec2 v_Texcoord;
 
@@ -216,19 +186,35 @@ void main()
 {
     @import qtek.compositor.kernel.gaussian_13
 
-    vec4 centerDepthTexel = texture2D(depthTex, v_Texcoord);
-    // Add 0.1000 bias to filling holes from missed rays.
-    float off = blurSize / textureSize.y;
+#if DIRECTION == 1
+    vec2 off = vec2(0.0, blurSize / textureSize.y);
+#else
+    vec2 off = vec2(blurSize / textureSize.x, 0.0);
+#endif
+
     vec2 coord = v_Texcoord;
 
     vec4 sum = vec4(0.0);
     float weightAll = 0.0;
 
-    float centerDepth = centerDepthTexel.r;
+#ifdef NORMALTEX_ENABLED
+    vec3 centerNormal = texture2D(normalTex, v_Texcoord).rgb * 2.0 - 1.0;
+#elif defined(DEPTHTEX_ENABLED)
+    float centerDepth = texture2D(depthTex, v_Texcoord).r;
+#endif
 
     for (int i = 0; i < 13; i++) {
-        vec2 coord = vec2(v_Texcoord.x, clamp(v_Texcoord.y + (float(i) - 6.0) * off, 0.0, 1.0));
+        vec2 coord = clamp(v_Texcoord + vec2(float(i) - 6.0) * off, vec2(0.0), vec2(1.0));
+
+#ifdef NORMALTEX_ENABLED
+        vec3 normal = texture2D(normalTex, coord).rgb * 2.0 - 1.0;
+        float w = gaussianKernel[i] * dot(normal, centerNormal);
+#elif defined(DEPTHTEX_ENABLED)
         float w = gaussianKernel[i] * max(0.0, 1.0 - edgeSharpness * 1000.0 * abs(centerDepth - texture2D(depthTex, coord).r));
+#else
+        float w = gaussianKernel[i];
+#endif
+
         weightAll += w;
         sum += texture2D(colorTex, coord) * w;
     }

@@ -192,7 +192,7 @@ class Scene {
         if (this._modelRootNode) {
             this._modelRootNode.traverse(function (mesh) {
                 var material = mesh.material;
-                if (material) {
+                if (material && !materialMap[material.name]) {
                     materialMap[material.name] = {};
                     SIMPLE_PROPERTIES.forEach(function (propName) {
                         materialMap[material.name][propName] = material[propName];
