@@ -1,6 +1,6 @@
 <template>
 <div class="ui-property-number-vector">
-    <div v-for="item in value" track-by="$index">
+    <div v-for="item in value" track-by="$index" class="ui-property-vector-item">
         <number :value.sync="item"></number>
     </div>
 </div>
@@ -25,4 +25,15 @@ export default {
 </script>
 
 <style lang="sass">
+.ui-property-number-vector {
+    .ui-property-vector-item {
+        display: inline-block;
+        width: 70px;
+        margin-right: 5px;
+
+        input {
+            width: 100%;
+        }
+    }
+}
 </style>

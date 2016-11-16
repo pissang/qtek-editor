@@ -131,6 +131,14 @@ class ViewMain {
         sphere.update();
 
         this._envProbe = sphere;
+
+
+        var envBox = new qtek.math.BoundingBox();
+        envBox.min.set(-2.6346957683563232, 0, -3.347585678100586);
+        envBox.max.set(3.284651517868042, 3.20135760307312, 5.092456817626953);
+
+        this._envBox = envBox;
+        sphere.position.add(envBox.min).add(envBox.max).scale(0.5);
     }
 
     _initCompositor () {
@@ -484,16 +492,18 @@ class ViewMain {
     setEnvMap (envMap) {
         var result = qtek.util.cubemap.prefilterEnvironmentMap(
             this._renderer, envMap, {
-                width: 128,
-                height: 128
+                width: 512,
+                height: 512
             }
         );
+
         this._scene.traverse(function (node) {
             if (node.material) {
                 node.material.environmentMap = result.environmentMap;
                 node.material.brdfLookup = result.brdfLookup;
+                node.material.environmentBox = this._envBox;
             }
-        });
+        }, this);
 
         this._envProbe.material.environmentMap = result.environmentMap;
 
@@ -528,6 +538,18 @@ class ViewMain {
         if (name === 'focalDist' || name === 'fstop' || name === 'focalRange') {
             this._cocNode.setParameter(name, value);
             this.render();
+        }
+    }
+
+    setPostProcessParameter (processType, name, value) {
+        switch (processType) {
+            case 'ssao':
+                this.setSsaoParameter(name, value);
+                break;
+            case 'ssr':
+                this.setSsaoParameter(name, value);
+                break;
+            case 'dof':
         }
     }
 }

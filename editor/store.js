@@ -136,12 +136,13 @@ var store = {
         new StringType('name', 'Material ID'),
 
         new ColorType('color', 'Base Color', '#fff'),
+        new ColorType('emission', 'Emission', '#000'),
+
         new RangeType('metalness', 'Metalness', 0, 0, 1),
         new RangeType('roughness', 'Roughness', 0, 0, 1),
 
         new RangeType('alpha', 'Alpha', 0, 0, 1),
 
-        new ColorType('emission', 'Emission', '#000'),
         new RangeType('emissionIntensity', 'Emission Intensity', 0, 0, 50),
 
         new VectorType('uvRepeat', 'UV Repeat', [1, 1]),
