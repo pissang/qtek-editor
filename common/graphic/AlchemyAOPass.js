@@ -65,12 +65,14 @@ function AlchemyAO(opt) {
     this._blurPass2 = new PostProcessPass(qtek.Shader.source('alchemy.blur'), opt.renderToTexture);
 
     this._blurPass1.setUniform('colorTex', this._ssaoPass.getTargetTexture());
-    this._blurPass1.setUniform('normalTex', this._gBuffer.getNormalTex());
+    this._blurPass1.setUniform('depthTex', this._gBuffer.getDepthTex());
     this._blurPass2.setUniform('colorTex', this._blurPass1.getTargetTexture());
-    this._blurPass2.setUniform('normalTex', this._gBuffer.getNormalTex());
+    this._blurPass2.setUniform('depthTex', this._gBuffer.getDepthTex());
 
-    this._blurPass1.getShader().enableTexture('normalTex');
-    this._blurPass2.getShader().enableTexture('normalTex');
+    this._blurPass1.getShader().disableTexturesAll();
+    this._blurPass2.getShader().disableTexturesAll();
+    this._blurPass1.getShader().enableTexture('depthTex');
+    this._blurPass2.getShader().enableTexture('depthTex');
     this._blurPass2.getShader().define('fragment', 'DIRECTION', 1);
 
     this.setKernelSize(opt.kernelSize || 12);
@@ -104,6 +106,7 @@ AlchemyAO.prototype.render = function (renderer, camera) {
     ssaoPass.setUniform('projectionInv', camera.invProjectionMatrix._array);
     ssaoPass.setUniform('viewInverseTranspose', viewInverseTranspose._array);
 
+
     var ssaoTexture = this._ssaoPass.getTargetTexture();
     if (width !== ssaoTexture.width || height !== ssaoTexture.height) {
         this._ssaoPass.resize(width / this._downScale, height / this._downScale);
@@ -113,6 +116,9 @@ AlchemyAO.prototype.render = function (renderer, camera) {
         this._blurPass2.setUniform('textureSize', [width / this._downScale, height / this._downScale]);
     }
     ssaoPass.render(renderer);
+
+    this._blurPass1.setUniform('projection', camera.projectionMatrix._array);
+    this._blurPass2.setUniform('projection', camera.projectionMatrix._array);
 
     this._blurPass1.render(renderer);
     this._blurPass2.render(renderer);

@@ -492,8 +492,8 @@ class ViewMain {
     setEnvMap (envMap) {
         var result = qtek.util.cubemap.prefilterEnvironmentMap(
             this._renderer, envMap, {
-                width: 512,
-                height: 512
+                width: 128,
+                height: 128
             }
         );
 
