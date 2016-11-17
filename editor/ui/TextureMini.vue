@@ -3,8 +3,8 @@
     <div :class="['texture-upload', value ? '' : 'empty']">
         <img :src="value ? (option.textureRootPath + '/' + value ) : 'editor/img/chessboard.jpg'">
     </div>
-    <div class="texture-clear" @click="clear" v-show="value">
-        <span class="glyphicon glyphicon-remove"></span>
+    <div class="texture-op" @click="value ? clear() : upload()">
+        <span :class="['glyphicon', value ? 'glyphicon-remove' : 'glyphicon-upload']"></span>
     </div>
 </div>
 </template>
@@ -31,9 +31,10 @@ export default {
             }
         }
     },
-    ready () {
-        var self = this;
-        this.$el.querySelector('.texture-upload').addEventListener('click', function () {
+    methods: {
+
+        upload: function () {
+            var self = this;
             var $input = $('<input type="file" />');
             $input[0].addEventListener('change', function (e) {
                 var file = e.target.files[0];
@@ -42,9 +43,8 @@ export default {
                 }
             });
             $input.click();
-        });
-    },
-    methods: {
+        },
+
         clear: function () {
             this.value = '';
         }
