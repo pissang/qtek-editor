@@ -132,39 +132,48 @@ var store = {
         fstop: new RangeType('fstop', 'f/stop', 1.4, 1, 10)
     },
 
-    inspectorMaterial: [
-        new StringType('name', 'Material ID'),
+    inspectorType: 'material',
 
-        new ColorType('color', 'Base Color', '#fff'),
-        new ColorType('emission', 'Emission', '#000'),
+    inspectorMaterial: {
+        name: new StringType('name', 'Material ID'),
 
-        new RangeType('metalness', 'Metalness', 0, 0, 1),
-        new RangeType('roughness', 'Roughness', 0, 0, 1),
+        color:  new ColorType('color', 'Base Color', '#ffffff'),
+        emission: new ColorType('emission', 'Emission', '#000000'),
 
-        new RangeType('alpha', 'Alpha', 0, 0, 1),
+        metalness: new RangeType('metalness', 'Metalness', 0, 0, 1),
+        roughness: new RangeType('roughness', 'Roughness', 0, 0, 1),
 
-        new RangeType('emissionIntensity', 'Emission Intensity', 0, 0, 50),
+        alpha: new RangeType('alpha', 'Alpha', 0, 0, 1),
 
-        new VectorType('uvRepeat', 'UV Repeat', [1, 1]),
+        emissionIntensity: new RangeType('emissionIntensity', 'Emission Intensity', 0, 0, 50),
 
-        new TextureType('diffuseMap', 'Diffuse Map'),
-        new TextureType('normalMap', 'Normal Map'),
-        new TextureType('roughnessMap', 'Roughness Map'),
-        new TextureType('metalnessMap', 'Metalness Map'),
-        new TextureType('emissiveMap', 'Emissive Map')
+        uvRepeat: new VectorType('uvRepeat', 'UV Repeat', [1, 1]),
+        uvOffset: new VectorType('uvOffset', 'UV Repeat', [0, 0]),
 
-        // new TextureType('environmentMap', 'Environment Map')
-    ],
+        diffuseMap: new TextureType('diffuseMap', 'Diffuse Map'),
+        normalMap: new TextureType('normalMap', 'Normal Map'),
+        roughnessMap: new TextureType('roughnessMap', 'Roughness Map'),
+        metalnessMap: new TextureType('metalnessMap', 'Metalness Map'),
+        emissiveMap: new TextureType('emissiveMap', 'Emissive Map')
+    },
 
-    inspectorMesh: [
-        new StringType('meshId', 'Mesh ID')
+    inspectorLight: [
+        new StringType('meshId', 'Mesh ID'),
+
+        new VectorType('position', 'Position', [0, 0, 0]),
+        new VectorType('rotation', 'Rotation', [0, 0, 0]),
+
+        new ColorType('color', 'Color', '#fff'),
+
+        new RangeType('intensity', 'Intensity', 1, 0, 50)
     ]
 };
 
-store.inspectorMaterial.forEach(function (mat) {
-    if (mat.type === 'texture') {
-        mat.textureRootPath = store.textureRootPath;
+
+for (var propName in store.inspectorMaterial) {
+    if (store.inspectorMaterial[propName].type === 'texture') {
+        store.inspectorMaterial[propName].textureRootPath = store.textureRootPath;
     }
-});
+};
 
 export default store;

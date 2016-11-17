@@ -18,12 +18,3 @@ export default {
     }
 };
 </script>
-
-<style lang='sass'>
-.ui-property-color {
-    input {
-        vertical-align: middle;
-        display: inline-block;
-    }
-}
-</style>

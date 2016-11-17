@@ -1,0 +1,8 @@
+<div>
+    <div slot="body" class="property-rows">
+        <div class="property-row" v-for="(index, item) in inspectorLight">
+            <label>{{item.title}}</label>
+            <component :is="item.type" :value.sync="item.value" :option="item"></component>
+        </div>
+    </div>
+</div>

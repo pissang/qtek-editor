@@ -28,18 +28,12 @@
     <div class="right" id="inspector">
         <ul class="nav nav-tabs" role="tablist">
             <li role="presentation" class="active">
-                <a data-toggle="tab" href="#entity">Entity</a>
-            </li>
-            <li role="presentation">
-                <a data-toggle="tab" href="#material">Material</a>
+                <a data-toggle="tab" href="#inspector">Material</a>
             </li>
         </ul>
         <div class="tab-content">
-            <div class="tab-pane active" role="tabpanel" id="entity">
-                <object></object>
-            </div>
-            <div class="tab-pane" role="tabpanel" id="material">
-                <material></material>
+            <div class="tab-pane active" role="tabpanel" id="inspector">
+                <component :is="inspectorType"></component>
             </div>
         </div>
     </div>
@@ -53,9 +47,15 @@ import Scene from './module/scene/Scene.vue';
 import Entity from './module/entity/Entity.vue';
 import Material from './module/material/Material.vue';
 
+import store from './store';
+
 export default {
 
     name: 'App',
+
+    data () {
+        return store;
+    },
 
     components: {
         'view': View,

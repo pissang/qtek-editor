@@ -1,10 +1,11 @@
 <template>
-<div class="ui-property-texture">
-    <div :class="['texture-upload-container', value ? '' : 'empty']">
+<div class="ui-property-texture-mini">
+    <div :class="['texture-upload', value ? '' : 'empty']">
         <img :src="value ? (option.textureRootPath + '/' + value ) : 'editor/img/chessboard.jpg'">
-        <div class="texture-upload">UPLOAD</div>
     </div>
-    <button @click="clear">清除</button>
+    <div class="texture-clear" @click="clear" v-show="value">
+        <span class="glyphicon glyphicon-remove"></span>
+    </div>
 </div>
 </template>
 
@@ -13,7 +14,7 @@
 // var defaultImg = 'editor/img/chessboard.jpg';
 export default {
 
-    name: 'texture',
+    name: 'texture-mini',
 
     props: {
         value: {

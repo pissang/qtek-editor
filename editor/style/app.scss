@@ -1,4 +1,5 @@
 @import 'font';
+@import 'ui';
 
 * {
     font-family: Helvetica Neue;
@@ -124,23 +125,15 @@ html, body {
 }
 
 #inspector, #render {
+
     .property-row {
         padding: 5px 10px;
 
         input[type=text], input[type=number] {
-            border: none;
             background: rgba(255, 255, 255, 0.2);
-            border-radius: 2px;
             color: #aaa;
-            padding: 3px 5px;
 
             font-size: 12px;
-        }
-
-        input[type=color] {
-            border: none;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 5px;
         }
 
         button {
@@ -154,12 +147,50 @@ html, body {
             color: #ddd;
             font-size: 12px;
 
-            display: block;
             margin-bottom: 3px;
 
             text-transform: uppercase;
         }
+
+        .divider {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 6px 0px;
+        }
     }
+}
+
+#inspector-material {
+
+    .inline>* {
+        display: inline-block;
+
+        margin-right: 8px;
+    }
+
+    .inline {
+        label {
+            width: 60px;
+        }
+    }
+
+    .ui-panel-header {
+        h4 {
+            font-size: 12px;
+        }
+        border-radius: 0;
+    }
+    .ui-panel-body {
+        padding: 10px;
+    }
+
+    .property-row.ui-panel {
+        padding: 0;
+    }
+
+    .property-row {
+        margin-top: 10px;
+    }
+
 }
 
 #render {

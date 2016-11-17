@@ -59,17 +59,12 @@ export default {
             store.renderStat.drawCallCount = renderStat.drawCallCount;
         });
 
-        var inspectorMaterialMap = store.inspectorMaterial.reduce(function (obj, item, key) {
-            obj[item.name] = item;
-            return obj;
-        }, {});
-
         function inspectMaterial(mesh) {
             var config = sceneLevel.getMaterialConfig(mesh.material);
 
             for (var name in config) {
-                if (inspectorMaterialMap[name]) {
-                    inspectorMaterialMap[name].value = config[name];
+                if (store.inspectorMaterial[name]) {
+                    store.inspectorMaterial[name].value = config[name];
                 }
             }
 
@@ -82,8 +77,8 @@ export default {
             }
             var currentMaterial = this._currentMesh.material;
             var config = {};
-            for (var name in inspectorMaterialMap) {
-                config[name] = inspectorMaterialMap[name].value;
+            for (var name in store.inspectorMaterial) {
+                config[name] = store.inspectorMaterial[name].value;
             }
             sceneLevel.setMaterial(currentMaterial, config);
         }, { deep: true });

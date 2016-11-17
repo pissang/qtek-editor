@@ -2,7 +2,7 @@
 import qtek from 'qtek';
 import colorUtil from 'zrender/lib/tool/color';
 
-var SIMPLE_PROPERTIES = ['color', 'roughness', 'alpha', 'metalness', 'emission', 'emissionIntensity', 'uvRepeat'];
+var SIMPLE_PROPERTIES = ['color', 'roughness', 'alpha', 'metalness', 'emission', 'emissionIntensity', 'uvRepeat', 'uvOffset'];
 var TEXTURE_PROPERTIES = ['diffuseMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap'];
 var COLOR_PROPERTIES = ['color', 'emission'];
 
