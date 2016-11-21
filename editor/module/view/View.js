@@ -114,7 +114,7 @@ export default {
         function load(config) {
             POSTPROCESSINGS.forEach(function (ppName) {
                 for (let key in config[ppName]) {
-                    store[ppName].value = config[ppName][key];
+                    store[ppName][key].value = config[ppName][key];
                 }
             });
 
