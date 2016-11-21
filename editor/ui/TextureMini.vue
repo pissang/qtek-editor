@@ -1,6 +1,6 @@
 <template>
 <div class="ui-property-texture-mini">
-    <div :class="['texture-upload', value ? '' : 'empty']">
+    <div :class="['texture-upload', value ? '' : 'empty']" @click="upload">
         <img :src="value ? (option.textureRootPath + '/' + value ) : 'editor/img/chessboard.jpg'">
     </div>
     <div class="texture-op" @click="value ? clear() : upload()">

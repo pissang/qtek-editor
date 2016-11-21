@@ -1,8 +1,8 @@
 import ViewMain from '../../../common/ViewMain';
 import Scene from '../../../common/Scene';
 import store from '../../store';
-import qtek from 'qtek';
-import colorUtil from 'zrender/lib/tool/color';
+
+let POSTPROCESSINGS = ['ssao', 'ssr', 'dof'];
 
 export default {
 
@@ -11,14 +11,14 @@ export default {
     },
 
     ready () {
-        var viewRoot = this.$el.querySelector('.view-main');
-        var viewMain = this._viewMain = new ViewMain(viewRoot, {
+        let viewRoot = this.$el.querySelector('.view-main');
+        let viewMain = this._viewMain = new ViewMain(viewRoot, {
             enablePicking: true
         });
-        var sceneLevel = this._sceneLevel = new Scene(viewMain, {
+        let sceneLevel = this._sceneLevel = new Scene(viewMain, {
             textureRootPath: store.textureRootPath
         });
-        var self = this;
+        let self = this;
 
         sceneLevel.loadModel('asset/model/kitchen/kitchen-mod.gltf')
             .then(function (rootNode) {
@@ -35,11 +35,11 @@ export default {
 
                 sceneLevel.loadCameraAnimation('asset/model/kitchen/camera01-05.gltf')
                     .then(function (clips) {
-                        var clipsArr = [];
-                        for (var name in clips) {
-                            clipsArr.push(clips[name]);
+                        let clipsArr = [];
+                        for (let key in clips) {
+                            clipsArr.push(clips[key]);
 
-                            store.clips.push(name);
+                            store.clips.push(key);
                         }
                         self._clips = clipsArr;
                     });
@@ -51,7 +51,7 @@ export default {
 
         viewMain.on('select', inspectMaterial, this);
         viewMain.on('render', function (renderStat) {
-            var camera = viewMain.getCamera();
+            let camera = viewMain.getCamera();
             store.currentCamera.position = Array.prototype.slice.call(camera.position._array);
             store.currentCamera.rotation = Array.prototype.slice.call(camera.rotation._array);
             store.renderStat.renderTime = Math.round(renderStat.renderTime);
@@ -60,11 +60,11 @@ export default {
         });
 
         function inspectMaterial(mesh) {
-            var config = sceneLevel.getMaterialConfig(mesh.material);
+            let config = sceneLevel.getMaterialConfig(mesh.material);
 
-            for (var name in config) {
-                if (store.inspectorMaterial[name]) {
-                    store.inspectorMaterial[name].value = config[name];
+            for (let key in config) {
+                if (store.inspectorMaterial[key]) {
+                    store.inspectorMaterial[key].value = config[key];
                 }
             }
 
@@ -75,93 +75,62 @@ export default {
             if (!this._currentMesh) {
                 return;
             }
-            var currentMaterial = this._currentMesh.material;
-            var config = {};
-            for (var name in store.inspectorMaterial) {
-                config[name] = store.inspectorMaterial[name].value;
+            let currentMaterial = this._currentMesh.material;
+            let config = {};
+            for (let key in store.inspectorMaterial) {
+                config[key] = store.inspectorMaterial[key].value;
             }
             sceneLevel.setMaterial(currentMaterial, config);
         }, { deep: true });
 
 
         function saveLocal() {
-            var materialMap = sceneLevel.exportMaterials();
-            var ssao = {};
-            for (var name in store.ssao) {
-                ssao[name] = store.ssao[name].value;
-            }
-            var ssr = {};
-            for (var name in store.ssr) {
-                ssr[name] = store.ssr[name].value;
-            }
-            var dof = {};
-            for (var name in store.dof) {
-                dof[name] = store.dof[name].value;
-            }
+            let materialMap = sceneLevel.exportMaterials();
 
-            window.localStorage.setItem('qtek-editor-draft', JSON.stringify({
-                ssao: ssao,
-                ssr: ssr,
-                dof: dof,
+            let postProcessingConfigs = POSTPROCESSINGS.reduce(function (obj, ppName) {
+                obj[ppName] = {};
+                for (let key in store[ppName]) {
+                    obj[ppName][key] = store[ppName][key].value;
+                }
+                return obj;
+            }, {});
+
+            window.localStorage.setItem('qtek-editor-draft', JSON.stringify(Object.assign({
                 materials: materialMap,
                 currentCamera: {
                     position: store.currentCamera.position,
                     rotation: store.currentCamera.rotation
                 }
-            }));
+            }, postProcessingConfigs)));
         }
 
         function loadLocal() {
-            var str = window.localStorage.getItem('qtek-editor-draft');
+            let str = window.localStorage.getItem('qtek-editor-draft');
             if (str) {
                 load(JSON.parse(str));
             }
         }
 
         function load(config) {
-            for (var name in config.ssao) {
-                if (store.ssao[name]) {
-                    store.ssao[name].value = config.ssao[name];
+            POSTPROCESSINGS.forEach(function (ppName) {
+                for (let key in config[ppName]) {
+                    store[ppName].value = config[ppName][key];
                 }
-            }
-            for (var name in config.ssr) {
-                if (store.ssr[name]) {
-                    store.ssr[name].value = config.ssr[name];
-                }
-            }
-            for (var name in config.dof) {
-                if (store.dof[name]) {
-                    store.dof[name].value = config.dof[name];
-                }
-            }
+            });
 
             sceneLevel.loadConfig(config);
         }
 
-        function updateSsaoParameter() {
-            for (var name in store.ssao) {
-                viewMain.setSsaoParameter(name, store.ssao[name].value);
-            }
-            viewMain.render();
-        }
-        function updateSsrParameter() {
-            for (var name in store.ssr) {
-                viewMain.setSsrParameter(name, store.ssr[name].value);
-            }
-            viewMain.render();
-        }
-        function updateDofParameter() {
-            for (var name in store.dof) {
-                viewMain.setDofParameter(name, store.dof[name].value);
+        function setPostProcessParameter(ppName) {
+            for (let key in store[ppName]) {
+                viewMain.setPostProcessParameter(ppName, key, store[ppName][key].value);
             }
             viewMain.render();
         }
 
-        this.$watch('ssao', updateSsaoParameter, { deep: true });
-        this.$watch('ssr', updateSsrParameter, { deep: true });
-        this.$watch('dof', updateDofParameter, { deep: true });
-
-        updateSsaoParameter();
+        POSTPROCESSINGS.forEach(function (ppName) {
+            this.$watch(ppName, setPostProcessParameter.bind(null, ppName), { deep: true });
+        }, this);
 
         this._load = load;
 
@@ -178,7 +147,6 @@ export default {
             viewMain.render();
         });
 
-        var self = this;
         // https://github.com/jeresig/jquery.hotkeys
         $(document).bind('keydown', 'f', function () {
             viewMain.focusOn(self._currentMesh);
@@ -193,11 +161,11 @@ export default {
         },
 
         load: function () {
-            var $input = $('<input type="file" />');
-            var self = this;
+            let $input = $('<input type="file" />');
+            let self = this;
             $input[0].addEventListener('change', function (e) {
-                var file = e.target.files[0];
-                var fileReader = new FileReader();
+                let file = e.target.files[0];
+                let fileReader = new FileReader();
                 fileReader.onload = function (e) {
                     self._load(JSON.parse(e.target.result));
                 };

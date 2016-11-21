@@ -163,7 +163,7 @@ var store = {
         new VectorType('position', 'Position', [0, 0, 0]),
         new VectorType('rotation', 'Rotation', [0, 0, 0]),
 
-        new ColorType('color', 'Color', '#fff'),
+        new ColorType('color', 'Color', '#ffffff'),
 
         new RangeType('intensity', 'Intensity', 1, 0, 50)
     ]

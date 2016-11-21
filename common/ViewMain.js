@@ -20,8 +20,9 @@ class ViewMain {
         });
 
         var camera = new qtek.camera.Perspective();
-        var scene = new qtek.Scene();
-
+        var scene = new qtek.Scene({
+            name: 'Scene'
+        });
 
         this._dom = dom;
         this._renderer = renderer;
@@ -550,6 +551,8 @@ class ViewMain {
                 this.setSsaoParameter(name, value);
                 break;
             case 'dof':
+                this.setDofParameter(name, value);
+                break;
         }
     }
 }
