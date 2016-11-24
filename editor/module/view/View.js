@@ -1,5 +1,6 @@
 import ViewMain from '../../../common/ViewMain';
 import Scene from '../../../common/Scene';
+import eventBus from '../../../common/eventBus';
 import store from '../../store';
 
 let POSTPROCESSINGS = ['ssao', 'ssr', 'dof'];
@@ -31,6 +32,7 @@ export default {
                 loadLocal();
 
                 viewMain.loadPanorama('asset/texture/Mans_Outside_2k.hdr', 0.5);
+
                 viewMain.updateEnvProbe();
 
                 sceneLevel.loadCameraAnimation('asset/model/kitchen/camera01-05.gltf')
@@ -49,8 +51,8 @@ export default {
 
         window.addEventListener('resize', function () { viewMain.resize(); });
 
-        viewMain.on('select', inspectMaterial, this);
-        viewMain.on('render', function (renderStat) {
+        eventBus.$on('select', inspectMaterial);
+        eventBus.$on('render', function (renderStat) {
             let camera = viewMain.getCamera();
             store.currentCamera.position = Array.prototype.slice.call(camera.position._array);
             store.currentCamera.rotation = Array.prototype.slice.call(camera.rotation._array);
@@ -68,7 +70,7 @@ export default {
                 }
             }
 
-            this._currentMesh = mesh;
+            self._currentMesh = mesh;
         }
 
         this.$watch('inspectorMaterial', function () {

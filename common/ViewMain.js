@@ -3,6 +3,8 @@ import GBuffer from './graphic/GBuffer';
 // import SSAOPass from './graphic/SSAOPass';
 import SSAOPass from './graphic/AlchemyAOPass';
 import SSRPass from './graphic/SSRPass';
+import eventBus from './eventBus';
+import EnvironmentProbe from './graphic/EnvironmentProbe';
 
 var hdrJson = JSON.parse(require('text!./graphic/composite.json'));
 
@@ -72,7 +74,7 @@ class ViewMain {
 
         this._initCompositor();
 
-        this.addEnvProbe([0, 1.4, 0]);
+        this.addEnvProbe();
 
         this._debugPass = new qtek.compositor.Pass({
             fragment: qtek.Shader.source('qtek.compositor.output')
@@ -117,29 +119,26 @@ class ViewMain {
     }
 
     addEnvProbe (position) {
+        var envProbe = new EnvironmentProbe();
+        var envBox = new qtek.math.BoundingBox();
+        envBox.min.set(-2.6346957683563232, 0, -3.347585678100586);
+        envBox.max.set(3.284651517868042, 3.20135760307312, 5.092456817626953);
+
+        envProbe.box = envBox;
+
         var sphere = new qtek.Mesh({
             geometry: new qtek.geometry.Sphere(),
             material: new qtek.StandardMaterial({
                 color: [1, 1, 1],
                 roughness: 0,
                 metalness: 1
-                // environmentMapPrefiltered: true
             })
         });
         sphere.scale.set(0.2, 0.2, 0.2);
 
-        sphere.position.setArray(position);
         sphere.update();
 
-        this._envProbe = sphere;
-
-
-        var envBox = new qtek.math.BoundingBox();
-        envBox.min.set(-2.6346957683563232, 0, -3.347585678100586);
-        envBox.max.set(3.284651517868042, 3.20135760307312, 5.092456817626953);
-
-        this._envBox = envBox;
-        sphere.position.add(envBox.min).add(envBox.max).scale(0.5);
+        this._envProbe = envProbe;
     }
 
     _initCompositor () {
@@ -270,7 +269,7 @@ class ViewMain {
                 select(result.target);
                 lastSelected = result.target;
 
-                self.trigger('select', result.target);
+                eventBus.$emit('select', result.target);
             }
             else if (lastSelected) {
                 unSelect(lastSelected);
@@ -342,7 +341,7 @@ class ViewMain {
             renderer.renderQueue([this._skydome], camera);
         }
         // Render light probe
-        renderer.renderQueue([this._envProbe], camera);
+        // renderer.renderQueue([this._envProbe], camera);
 
         this._colorFb.unbind(renderer);
 
@@ -372,7 +371,7 @@ class ViewMain {
 
         renderStat.renderTime = Date.now() - time;
 
-        this.trigger('render', renderStat);
+        eventBus.$emit('render', renderStat);
     }
 
     resize () {
@@ -412,19 +411,12 @@ class ViewMain {
     focusOn (node) {
         this._scene.update();
 
-        var bbox = new qtek.math.BoundingBox();
-        var bboxTmp = new qtek.math.BoundingBox();
-        var cp = new qtek.math.Vector3();
-        node.traverse(function (mesh) {
-            if (mesh.geometry) {
-                bboxTmp.copy(mesh.geometry.boundingBox);
-                bboxTmp.applyTransform(mesh.worldTransform);
-                bbox.union(bboxTmp);
-            }
-        });
+        var bbox = node.getBoundingBox();
+        bbox.applyTransform(node.worldTransform);
 
         var z = this._camera.worldTransform.z;
 
+        var cp = new qtek.math.Vector3();
         cp.add(bbox.min).add(bbox.max).scale(0.5);
 
         // Get size;
@@ -472,48 +464,27 @@ class ViewMain {
 
     updateEnvProbe () {
         if (this._envProbe) {
-            var textureCube = new qtek.TextureCube({
-                width: 128,
-                height: 128
-            });
-            var envMapPass = new qtek.prePass.EnvironmentMap({
-                shadowMapPass: this._shadowMapPass,
-                texture: textureCube
-            });
-            envMapPass.position.copy(this._envProbe.position);
+            var envProbe = this._envProbe;
 
-            envMapPass.render(this._renderer, this._scene);
+            envProbe.updateEnvironment(
+                this._renderer, this._scene, this._shadowMapPass
+            );
 
-            this.setEnvMap(textureCube);
+            this._scene.traverse(function (node) {
+                if (node.material) {
+                    node.material.environmentMap = envProbe.getEnvironmentMap();
+                    node.material.brdfLookup = envProbe.getBRDFLookup();
+                    node.material.environmentBox = envProbe.box;
+                }
+            }, this);
 
-            textureCube.dispose(this._renderer.gl);
+            this._ambientLight.coefficients = envProbe.getSHCoefficient();
+
+            this.render();
         }
     }
 
-    setEnvMap (envMap) {
-        var result = qtek.util.cubemap.prefilterEnvironmentMap(
-            this._renderer, envMap, {
-                width: 128,
-                height: 128
-            }
-        );
-
-        this._scene.traverse(function (node) {
-            if (node.material) {
-                node.material.environmentMap = result.environmentMap;
-                node.material.brdfLookup = result.brdfLookup;
-                node.material.environmentBox = this._envBox;
-            }
-        }, this);
-
-        this._envProbe.material.environmentMap = result.environmentMap;
-
-        this._ambientLight.coefficients = qtek.util.sh.projectEnvironmentMap(this._renderer, result.environmentMap);
-
-        this.render();
-    }
-
-    setSsaoParameter (name, value) {
+    setSSAOParameter (name, value) {
         if (typeof name === 'object') {
             for (var key in name) {
                 this._ssaoPass.setParameter(key, name[key]);
@@ -524,7 +495,7 @@ class ViewMain {
         this.render();
     }
 
-    setSsrParameter (name, value) {
+    setSSRParameter (name, value) {
         if (typeof name === 'object') {
             for (var key in name) {
                 this._ssrPass.setParameter(key, name[key]);
@@ -535,7 +506,7 @@ class ViewMain {
         this.render();
     }
 
-    setDofParameter (name, value) {
+    setDOFParameter (name, value) {
         if (name === 'focalDist' || name === 'fstop' || name === 'focalRange') {
             this._cocNode.setParameter(name, value);
             this.render();
@@ -545,18 +516,16 @@ class ViewMain {
     setPostProcessParameter (processType, name, value) {
         switch (processType) {
             case 'ssao':
-                this.setSsaoParameter(name, value);
+                this.setSSAOParameter(name, value);
                 break;
             case 'ssr':
-                this.setSsaoParameter(name, value);
+                this.setSSRParameter(name, value);
                 break;
             case 'dof':
-                this.setDofParameter(name, value);
+                this.setDOFParameter(name, value);
                 break;
         }
     }
 }
-
-Object.assign(ViewMain.prototype, qtek.core.mixin.notifier);
 
 export default ViewMain;

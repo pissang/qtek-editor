@@ -175,15 +175,11 @@ class Scene {
             );
         }
 
-        for (var name in config.ssao) {
-            viewMain.setSsaoParameter(name, config.ssao[name]);
-        }
-        for (var name in config.ssr) {
-            viewMain.setSsrParameter(name, config.ssr[name]);
-        }
-        for (var name in config.dof) {
-            viewMain.setDofParameter(name, config.dof[name]);
-        }
+        ['ssao', 'ssr', 'dof'].forEach(function (postProcessType) {
+            for (var key in config[postProcessType]) {
+                viewMain.setPostProcessParameter(postProcessType, key, config[postProcessType][name]);
+            }
+        });
     }
 
     exportMaterials (config) {
