@@ -1,8 +1,8 @@
 import qtek from 'qtek';
 import PostProcessPass from './PostProcessPass';
 
-qtek.Shader['import'](require('text!./normal.essl'));
-qtek.Shader['import'](require('text!./ssao.essl'));
+qtek.Shader['import'](require('text!./gbuffer.glsl'));
+qtek.Shader['import'](require('text!./ssao.glsl'));
 
 function generateNoiseData(size) {
     var data = new Uint8Array(size * size * 4);

@@ -5,8 +5,10 @@ import SSAOPass from './graphic/AlchemyAOPass';
 import SSRPass from './graphic/SSRPass';
 import eventBus from './eventBus';
 import EnvironmentProbe from './graphic/EnvironmentProbe';
+import TemporalSuperSampling from './graphic/TemporalSuperSampling';
 
 var hdrJson = JSON.parse(require('text!./graphic/composite.json'));
+
 
 
 class ViewMain {
@@ -33,16 +35,6 @@ class ViewMain {
 
         dom.appendChild(renderer.canvas);
 
-        var animation = new qtek.animation.Animation();
-        animation.start();
-        animation.on('frame', function () {
-            if (this._needsUpdate) {
-                this.renderImmediately();
-            }
-        }, this);
-
-        this._animation = animation;
-
         this._initScene();
 
         this._initControl();
@@ -63,14 +55,20 @@ class ViewMain {
         });
 
         this._colorFb = new qtek.FrameBuffer();
-        this._colorTex = new qtek.Texture2D({
+        this._rawOutput = new qtek.Texture2D({
             type: qtek.Texture.HALF_FLOAT
         });
+        this._temporalSSFb = new qtek.FrameBuffer({
+            depthBuffer: false
+        });
+        this._postProcessOutput = new qtek.Texture2D();
 
         this._shadowMapPass = new qtek.prePass.ShadowMap({
             shadowCascade: 2,
             cascadeSplitLogFactor: 0
         });
+
+        this._temporalSSPass = new TemporalSuperSampling();
 
         this._initCompositor();
 
@@ -81,10 +79,28 @@ class ViewMain {
         });
 
         this.resize();
+
+        var animation = new qtek.animation.Animation();
+        animation.start();
+        animation.on('frame', function () {
+            if (this._needsUpdate) {
+                this._temporalSSPass.resetFrame();
+                this.renderImmediately();
+            }
+            else if (!this._temporalSSPass.isFinished()) {
+                this.renderImmediately(true);
+            }
+        }, this);
+
+        this._animation = animation;
+
+        scene.on('beforerender', function () {
+            this._temporalSSPass.jitterProjection(renderer, camera);
+        }, this);
+
     }
 
     addModel (rootNode) {
-        var self = this;
         var ssaoMap = this._ssaoPass.getTargetTexture();
         var materialMap = {};
         rootNode.traverse(function (mesh) {
@@ -92,10 +108,6 @@ class ViewMain {
             if (geometry) {
                 // mesh.culling = false;
                 mesh.beforeRender = function () {
-                    var viewSize = mesh.material.get('viewportSize') || [];
-                    viewSize[0] = self._renderer.getWidth();
-                    viewSize[1] = self._renderer.getHeight();
-                    mesh.material.set('viewportSize', viewSize);
                     mesh.material.shader.define('fragment', 'SSAOMAP_ENABLED');
                     mesh.material.set('ssaoMap', ssaoMap);
                 };
@@ -310,10 +322,11 @@ class ViewMain {
     }
 
     render () {
+        this._temporalSSPass.resetFrame();
         this._needsUpdate = true;
     }
 
-    renderImmediately () {
+    renderImmediately (accumulateStage) {
         this._needsUpdate = false;
         var time = Date.now();
 
@@ -333,7 +346,7 @@ class ViewMain {
         }
 
         this._shadowMapPass.render(renderer, scene, camera);
-        this._colorFb.attach(renderer.gl, this._colorTex);
+        this._colorFb.attach(renderer.gl, this._rawOutput);
         this._colorFb.bind(renderer);
         var renderStat = renderer.render(scene, camera, true, true);
 
@@ -346,7 +359,7 @@ class ViewMain {
         this._colorFb.unbind(renderer);
 
         if (this.enableSsr) {
-            this._ssrPass.render(renderer, camera, this._colorTex, this._ssaoPass.getTargetTexture());
+            this._ssrPass.render(renderer, camera, this._rawOutput, this._ssaoPass.getTargetTexture());
             if (this._sourceNode) {
                 this._sourceNode.texture = this._ssrPass.getTargetTexture();
                 this._sourceNode.shaderDefine('RGBM');
@@ -355,16 +368,23 @@ class ViewMain {
         }
         else {
             if (this._sourceNode) {
-                this._sourceNode.texture = this._colorTex;
+                this._sourceNode.texture = this._rawOutput;
                 this._sourceNode.shaderUnDefine('RGBM');
                 this._sourceNode.shaderDefine('RGBM_ENCODE');
             }
         }
 
         this._cocNode.setParameter('depth', this._gBuffer.getDepthTex());
-        this._compositor.render(renderer);
 
-        // this._debugPass.setUniform('texture', this._colorTex);
+        this._temporalSSFb.attach(
+            renderer.gl, this._postProcessOutput
+        );
+        this._temporalSSFb.unbind(renderer);
+        this._compositor.render(renderer, this._temporalSSFb);
+
+        this._temporalSSPass.render(this._renderer, this._postProcessOutput);
+
+        // this._debugPass.setUniform('texture', this._rawOutput);
         // this._debugPass.render(renderer);
         // this._shadowMapPass.renderDebug(renderer);
 
@@ -381,9 +401,15 @@ class ViewMain {
         this._renderer.resize(width, height);
         this._camera.aspect = this._renderer.getViewportAspect();
 
-        this._colorTex.width = width;
-        this._colorTex.height = height;
-        this._colorTex.dirty();
+        this._rawOutput.width = width;
+        this._rawOutput.height = height;
+        this._rawOutput.dirty();
+
+        this._postProcessOutput.width = width;
+        this._postProcessOutput.height = height;
+        this._postProcessOutput.dirty();
+
+        this._temporalSSPass.resize(width, height);
 
         this.render();
     }

@@ -1,7 +1,7 @@
 var qtek = require('qtek');
 var PostProcessPass = require('./PostProcessPass');
 
-qtek.Shader['import'](require('text!./ssr.essl'));
+qtek.Shader['import'](require('text!./ssr.glsl'));
 
 function SSRPass(opt) {
     opt = opt || {};

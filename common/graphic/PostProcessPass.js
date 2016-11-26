@@ -6,7 +6,9 @@ function PostProcessPass(shader, renderToTargetOpt, clearColor) {
         clearColor: clearColor
     });
     if (renderToTargetOpt) {
-        this._frameBuffer = new qtek.FrameBuffer();
+        this._frameBuffer = new qtek.FrameBuffer({
+            depthBuffer: false
+        });
         this._targetTexture = new qtek.Texture2D(renderToTargetOpt);
     }
 }

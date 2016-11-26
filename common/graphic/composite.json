@@ -982,9 +982,6 @@
             "shader" : "#source(qtek.compositor.fxaa3)",
             "inputs" : {
                 "texture" : "vignette"
-            },
-            "parameters": {
-                "viewportSize": "expr( [width, height] )"
             }
         }
     ]

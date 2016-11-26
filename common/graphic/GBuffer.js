@@ -1,7 +1,7 @@
 
 var qtek = require('qtek');
 
-qtek.Shader['import'](require('text!./normal.essl'));
+qtek.Shader['import'](require('text!./gbuffer.glsl'));
 
 function createFillCanvas(color) {
     var canvas = document.createElement('canvas');
