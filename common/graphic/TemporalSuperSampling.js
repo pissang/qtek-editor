@@ -24,7 +24,7 @@ class TemporalSuperSampling {
     constructor () {
         var haltonSequence = [];
 
-        for (var i = 0; i < 64; i++) {
+        for (var i = 0; i < 20; i++) {
             haltonSequence.push([
                 halton(i, 2), halton(i, 3)
             ]);

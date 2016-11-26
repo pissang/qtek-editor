@@ -177,7 +177,7 @@ class Scene {
 
         ['ssao', 'ssr', 'dof'].forEach(function (postProcessType) {
             for (var key in config[postProcessType]) {
-                viewMain.setPostProcessParameter(postProcessType, key, config[postProcessType][name]);
+                viewMain.setPostProcessParameter(postProcessType, key, config[postProcessType][key]);
             }
         });
     }
