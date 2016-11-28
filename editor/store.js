@@ -100,7 +100,9 @@ var store = {
 
     // Scene tree
     sceneTree: {
+
         selected: '',
+
         root: null
     },
 
@@ -132,10 +134,10 @@ var store = {
         fstop: new RangeType('fstop', 'f/stop', 1.4, 1, 10)
     },
 
-    inspectorType: 'material',
+    inspectorType: '',
 
     inspectorMaterial: {
-        name: new StringType('name', 'Material ID'),
+        name: new StringType('name', 'Name'),
 
         color:  new ColorType('color', 'Base Color', '#ffffff'),
         emission: new ColorType('emission', 'Emission', '#000000'),
@@ -157,16 +159,16 @@ var store = {
         emissiveMap: new TextureType('emissiveMap', 'Emissive Map')
     },
 
-    inspectorLight: [
-        new StringType('meshId', 'Mesh ID'),
+    inspectorLight: {
+        name: new StringType('name', 'Name'),
 
-        new VectorType('position', 'Position', [0, 0, 0]),
-        new VectorType('rotation', 'Rotation', [0, 0, 0]),
+        position: new VectorType('position', 'Position', [0, 0, 0]),
+        rotation: new VectorType('rotation', 'Rotation', [0, 0, 0]),
 
-        new ColorType('color', 'Color', '#ffffff'),
+        color: new ColorType('color', 'Color', '#ffffff'),
 
-        new RangeType('intensity', 'Intensity', 1, 0, 50)
-    ]
+        intensity: new RangeType('intensity', 'Intensity', 1, 0, 50)
+    }
 };
 
 
@@ -174,6 +176,6 @@ for (var propName in store.inspectorMaterial) {
     if (store.inspectorMaterial[propName].type === 'texture') {
         store.inspectorMaterial[propName].textureRootPath = store.textureRootPath;
     }
-};
+}
 
 export default store;

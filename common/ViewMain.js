@@ -379,7 +379,6 @@ class ViewMain {
         this._temporalSSFb.attach(
             renderer.gl, this._postProcessOutput
         );
-        this._temporalSSFb.unbind(renderer);
         this._compositor.render(renderer, this._temporalSSFb);
 
         this._temporalSSPass.render(this._renderer, this._postProcessOutput);

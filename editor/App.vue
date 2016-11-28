@@ -46,6 +46,7 @@ import Render from './module/render/Render.vue';
 import Scene from './module/scene/Scene.vue';
 import Entity from './module/entity/Entity.vue';
 import Material from './module/material/Material.vue';
+import Light from './module/light/Light.vue';
 
 import store from './store';
 
@@ -62,7 +63,8 @@ export default {
         'material': Material,
         'render': Render,
         'scene': Scene,
-        'entity': Entity
+        'entity': Entity,
+        'light': Light
     }
 };
 </script>

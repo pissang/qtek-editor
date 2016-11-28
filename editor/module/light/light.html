@@ -1,8 +1,28 @@
-<div>
-    <div slot="body" class="property-rows">
-        <div class="property-row" v-for="(index, item) in inspectorLight">
-            <label>{{item.title}}</label>
-            <component :is="item.type" :value.sync="item.value" :option="item"></component>
+<div id="inspector-light">
+    <div class="property-rows">
+        <div class="property-row inline">
+            <label class="property-name">Name</label>
+            <string :value.sync="inspectorLight.name.value" :optino="inspectorLight.name"></string>
         </div>
+
+        <panel class="property-row" title="Transform">
+            <div>
+                <label class="property-name">Position</label>
+                <vector :value.sync="inspectorLight.position.value" :option="inspectorLight.position"></vector>
+            </div>
+            <div>
+                <label class="property-name">Rotation</label>
+                <vector :value.sync="inspectorLight.rotation.value" :option="inspectorLight.position"></vector>
+            </div>
+        </panel>
+
+        <panel class="property-row" title="Color">
+            <color :value.sync="inspectorLight.color.value" :option="inspectorLight.color"></color>
+            <div class="divider"></div>
+            <div class="inline">
+                <label class="property-name">Intensity</label>
+                <range :value.sync="inspectorLight.intensity.value" :option="inspectorLight.intensity"></range>
+            </div>
+        </panel>
     </div>
 </div>

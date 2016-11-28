@@ -211,6 +211,10 @@ class Scene {
         return tree;
     }
 
+    getNodeByName (name) {
+        return this._viewMain.getScene().getNode(name);
+    }
+
     _buildTree (node) {
         var root = {};
 

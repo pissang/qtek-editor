@@ -3,6 +3,8 @@ import Scene from '../../../common/Scene';
 import eventBus from '../../../common/eventBus';
 import store from '../../store';
 
+import qtek from 'qtek';
+
 let POSTPROCESSINGS = ['ssao', 'ssr', 'dof'];
 
 export default {
@@ -51,14 +53,8 @@ export default {
 
         window.addEventListener('resize', function () { viewMain.resize(); });
 
-        eventBus.$on('select', inspectMaterial);
-        eventBus.$on('render', function (renderStat) {
-            let camera = viewMain.getCamera();
-            store.currentCamera.position = Array.prototype.slice.call(camera.position._array);
-            store.currentCamera.rotation = Array.prototype.slice.call(camera.rotation._array);
-            store.renderStat.renderTime = Math.round(renderStat.renderTime);
-            store.renderStat.vertexCount = renderStat.vertexCount;
-            store.renderStat.drawCallCount = renderStat.drawCallCount;
+        eventBus.$on('select', function (mesh) {
+            store.sceneTree.selected = mesh.name;
         });
 
         function inspectMaterial(mesh) {
@@ -69,15 +65,27 @@ export default {
                     store.inspectorMaterial[key].value = config[key];
                 }
             }
+        }
 
-            self._currentMesh = mesh;
+        function inspectLight(light) {
+            let config = sceneLevel.getLightConfig(light);
+
+            for (let key in config) {
+                if (store.inspectorMaterial[key]) {
+                    store.inspectorMaterial[key].value = config[key];
+                }
+            }
+
         }
 
         this.$watch('inspectorMaterial', function () {
-            if (!this._currentMesh) {
+            let mesh = sceneLevel.getNodeByName(store.sceneTree.selected);
+
+            let currentMaterial = mesh && mesh.material;
+            if (!currentMaterial) {
                 return;
             }
-            let currentMaterial = this._currentMesh.material;
+
             let config = {};
             for (let key in store.inspectorMaterial) {
                 config[key] = store.inspectorMaterial[key].value;
@@ -85,6 +93,27 @@ export default {
             sceneLevel.setMaterial(currentMaterial, config);
         }, { deep: true });
 
+        this.$watch('inspectorLight', function () {
+
+        });
+
+        this.$watch('sceneTree.selected', function (value) {
+            let node = sceneLevel.getNodeByName(value);
+            if (!node) {
+                store.inspectorType = '';
+            }
+            else if (node.material) {
+                store.inspectorType = 'material';
+
+                inspectMaterial(node);
+            }
+            else if (node instanceof qtek.Light) {
+                store.inspectorType = 'light';
+            }
+            else {
+                store.inspectorType = '';
+            }
+        });
 
         function saveLocal() {
             let materialMap = sceneLevel.exportMaterials();
@@ -153,6 +182,16 @@ export default {
         $(document).bind('keydown', 'f', function () {
             viewMain.focusOn(self._currentMesh);
         });
+
+        eventBus.$on('render', function (renderStat) {
+            let camera = viewMain.getCamera();
+            store.currentCamera.position = Array.prototype.slice.call(camera.position._array);
+            store.currentCamera.rotation = Array.prototype.slice.call(camera.rotation._array);
+            store.renderStat.renderTime = Math.round(renderStat.renderTime);
+            store.renderStat.vertexCount = renderStat.vertexCount;
+            store.renderStat.drawCallCount = renderStat.drawCallCount;
+        });
+
     },
 
     methods: {
