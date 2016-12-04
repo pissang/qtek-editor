@@ -259,30 +259,34 @@ class ViewMain {
 
         var lastSelected = null;
 
-        function select(mesh) {
-            mesh.material.set('mixIntensity', 0.2);
-            self.render();
-        }
-        function unSelect(mesh) {
-            mesh.material.set('mixIntensity', 0);
-            self.render();
-        }
+        var confirmDrag = false;
+        var startX = 0;
+        var startY = 0;
+        this._dom.addEventListener('mousedown', function (e) {
+            startX = e.offsetX;
+            startY = e.offsetY;
+        });
+        this._dom.addEventListener('mouseup', function (e) {
+            var dx = e.offsetX - startX;
+            var dy = e.offsetY - startY;
+            confirmDrag = Math.sqrt(dx * dx + dy * dy) > 20;
+        });
 
         this._dom.addEventListener('click', function (e) {
+            // Not trigger click if it is a drag
+            if (confirmDrag) {
+                return;
+            }
+
             var x = e.offsetX;
             var y = e.offsetY;
             var result = picking.pick(x, y);
             if (result) {
-                if (lastSelected) {
-                    unSelect(lastSelected);
-                }
-                select(result.target);
                 lastSelected = result.target;
 
                 eventBus.$emit('select', result.target);
             }
             else if (lastSelected) {
-                unSelect(lastSelected);
                 lastSelected = null;
             }
         });
@@ -328,8 +332,8 @@ class ViewMain {
     // Hook for render other objects share same depth buffer
     // renderOthersShareDepthBuffer() {}
 
-    // Hook for render other objects share same depth buffer
-    // renderOthersSeperateDepthBuffer() {}
+    // Hook for render other objects
+    // renderOthersAfterCompositing() {}
 
     renderImmediately (accumulateStage) {
         this._needsUpdate = false;
@@ -363,11 +367,6 @@ class ViewMain {
             this.renderOthersShareDepthBuffer(renderer, scene, camera);
         }
 
-        if (this.renderOthersSeperateDepthBuffer) {
-            renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT);
-            this.renderOthersSeperateDepthBuffer(renderer, scene, camera);
-        }
-
 
         this._colorFb.unbind(renderer);
 
@@ -394,7 +393,14 @@ class ViewMain {
         );
         this._compositor.render(renderer, this._temporalSSFb);
 
-        this._temporalSSPass.render(this._renderer, this._postProcessOutput);
+        if (this.renderOthersAfterCompositing) {
+            this._temporalSSFb.bind(renderer);
+            renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT);
+            this.renderOthersAfterCompositing(renderer, scene, camera);
+            this._temporalSSFb.unbind(renderer);
+        }
+
+        this._temporalSSPass.render(renderer, this._postProcessOutput);
 
         // this._debugPass.setUniform('texture', this._rawOutput);
         // this._debugPass.render(renderer);

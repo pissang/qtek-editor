@@ -41,7 +41,7 @@ export default {
         viewMain.renderOthersShareDepthBuffer = function (renderer, scene, camera) {
 
         };
-        viewMain.renderOthersSeperateDepthBuffer = function (renderer, scene, camera) {
+        viewMain.renderOthersAfterCompositing = function (renderer, scene, camera) {
             if (boundingGizmo.target) {
                 boundingGizmo.update();
                 renderer.renderQueue([boundingGizmo], camera);
