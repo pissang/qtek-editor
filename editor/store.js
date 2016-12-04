@@ -198,6 +198,10 @@ var store = {
         position: new VectorType('position', [0, 0, 0]),
         rotation: new VectorType('rotation', [0, 0, 0]),
 
+        fixedTarget: new BooleanType('fixedTarget', false),
+        target: new VectorType('target', [0, 0, 0]),
+
+
         color: new ColorType('color', '#ffffff'),
 
         intensity: new RangeType('intensity', 1, 0, 50)

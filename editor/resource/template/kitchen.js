@@ -1,5 +1,17 @@
 module.exports = {
     load: function (sceneBridge, store, cb) {
+        // Light
+        var light = sceneBridge.createLight({
+            type: 'directional',
+            color: [1, 1, 1],
+            intensity: 20,
+            position: [-5, 7, -18],
+            fixedTarget: true,
+            target: [0, 0, 0]
+        });
+        light.shadowBias = 0.005;
+        light.shadowResolution = 2048;
+
         sceneBridge.loadModel('asset/model/kitchen/kitchen.gltf')
             .then(function (rootNode) {
                 rootNode.rotation.rotateX(-Math.PI / 2);
@@ -23,6 +35,7 @@ module.exports = {
                     });
 
                 store.sceneTree.root = sceneBridge.getSceneTree();
+
         });
     }
 };

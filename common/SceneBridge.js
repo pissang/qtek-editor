@@ -37,6 +37,10 @@ function parseColor(color) {
     return color || [0, 0, 0];
 }
 
+function extractLightType(type) {
+    return type.toLowerCase().replace('_light', '');
+}
+
 class SceneBridge {
 
     constructor(viewMain, option) {
@@ -168,7 +172,7 @@ class SceneBridge {
         var rot = new qtek.math.Vector3();
         rot.eulerFromQuat(light.rotation);
         return {
-            type: light.type.toLowerCase().replace('_light', ''),
+            type: extractLightType(light.type),
             position: Array.prototype.slice.call(light.position._array),
             rotation: Array.prototype.slice.call(rot._array),
             color: stringifyColor(light.color),
@@ -181,12 +185,26 @@ class SceneBridge {
      * Set light from config.
      */
     setLightBasicConfig (light, config) {
-        var euler = new qtek.math.Vector3();
-        euler.setArray(config.rotation);
-        light.position.setArray(config.position);
-        light.rotation.fromEuler(euler);
-        light.color = parseColor(config.color);
-        light.intensity = config.intensity;
+        if (config.position) {
+            light.position.setArray(config.position);
+        }
+        if (config.fixedTarget && config.target) {
+            var target = new qtek.math.Vector3();
+            target.setArray(config.target);
+            light.lookAt(target);
+        }
+        else {
+            var euler = new qtek.math.Vector3();
+            euler.setArray(config.rotation);
+            light.rotation.fromEuler(euler);
+        }
+        if (config.color) {
+            light.color = parseColor(config.color);
+        }
+        if (config.intensity != null) {
+            light.intensity = config.intensity;
+        }
+
         // light.castShadow = config.castShadow;
     }
 
@@ -194,7 +212,7 @@ class SceneBridge {
      * Get extra light config according to the light type
      */
     getLightExtraConfig (light) {
-        switch (light.type.toLowerCase().replace('_light', '')) {
+        switch (extractLightType(light.type)) {
             case 'ambient':
             case 'directional':
                 return {};
@@ -209,7 +227,6 @@ class SceneBridge {
                     penumbraAngle: light.penumbraAngle,
                     falloffFactor: light.falloffFactor
                 };
-
         }
     }
 
@@ -217,19 +234,49 @@ class SceneBridge {
      * Set light from extra config according to the light type.
      */
     setLightExtraConfig (light, config) {
-        switch (light.type.toLowerCase().replace('_light', '')) {
+        switch (light.type) {
             case 'ambient':
             case 'directional':
                 break;
             case 'point':
-                light.range = config.range;
+                if (config.range != null) {
+                    light.range = config.range;
+                }
                 break;
             case 'spot':
-                light.range = config.range;
-                light.umbraAngle = config.umbraAngle;
-                light.penumbraAngle = config.penumbraAngle;
-                light.falloffFactor = config.falloffFactor;
+                var props = ['range', 'umbraAngle', 'penumbraAngle', 'falloffFactor'];
+                props.forEach(function (prop) {
+                    if (config[prop] != null) {
+                        light[prop] = config[prop];
+                    }
+                });
         }
+    }
+
+    createLight (config) {
+        var light;
+        switch (config.type) {
+            case 'ambient':
+                light = new qtek.light.Ambient();
+                break;
+            case 'directional':
+                light = new qtek.light.Directional();
+                break;
+            case 'point':
+                light = new qtek.light.Point();
+                break;
+            case 'spot':
+                light = new qtek.light.Spot();
+                break;
+
+        }
+
+        this.setLightBasicConfig(light, config);
+        this.setLightExtraConfig(light, config);
+
+        this._viewMain.addLight(light);
+
+        return light;
     }
 
     /**

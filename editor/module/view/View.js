@@ -38,9 +38,7 @@ export default {
             boundingGizmo.target = mesh;
         });
 
-        viewMain.renderOthersShareDepthBuffer = function (renderer, scene, camera) {
-
-        };
+        viewMain.renderOthersShareDepthBuffer = function (renderer, scene, camera) {        };
         viewMain.renderOthersAfterCompositing = function (renderer, scene, camera) {
             if (boundingGizmo.target) {
                 boundingGizmo.update();

@@ -53,6 +53,18 @@ export default {
                 });
             });
 
+        // Light
+        var light = sceneBridge.createLight({
+            type: 'directional',
+            color: [1, 1, 1],
+            intensity: 20,
+            position: [-5, 7, -18],
+            fixedTarget: true,
+            target: [0, 0, 0]
+        });
+        light.shadowBias = 0.005;
+        light.shadowResolution = 2048;
+
         // var audio = document.createElement('audio');
         // audio.src = 'asset/sound/bensound-acousticbreeze.mp3';
         // audio.autoplay = true;
