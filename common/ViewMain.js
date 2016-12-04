@@ -10,13 +10,12 @@ import TemporalSuperSampling from './graphic/TemporalSuperSampling';
 var hdrJson = JSON.parse(require('text!./graphic/composite.json'));
 
 
-
 class ViewMain {
     constructor(dom, option) {
         option = option || {};
 
-        this.enableSsao = true;
-        this.enableSsr = true;
+        this.enableSSAO = true;
+        this.enableSSR = true;
 
         var renderer = new qtek.Renderer({
             canvas: document.createElement('canvas'),
@@ -97,7 +96,6 @@ class ViewMain {
         scene.on('beforerender', function () {
             this._temporalSSPass.jitterProjection(renderer, camera);
         }, this);
-
     }
 
     addModel (rootNode) {
@@ -106,7 +104,7 @@ class ViewMain {
         rootNode.traverse(function (mesh) {
             var geometry = mesh.geometry;
             if (geometry) {
-                // mesh.culling = false;
+                mesh.culling = false;
                 mesh.beforeRender = function () {
                     mesh.material.shader.define('fragment', 'SSAOMAP_ENABLED');
                     mesh.material.set('ssaoMap', ssaoMap);
@@ -169,7 +167,7 @@ class ViewMain {
         var lensflareTex = new qtek.Texture2D();
         var lensdirtTex = new qtek.Texture2D();
         self._sourceNode = self._compositor.getNodeByName('source');
-        lutTex.load('asset/texture/lut.png')
+        lutTex.load('asset/texture/sedona.png')
             .success(function () {
                 self.render();
             });
@@ -202,23 +200,23 @@ class ViewMain {
         var ambientLight = new qtek.light.AmbientSH({
             // Init coefficients
             coefficients: [0.8450393676757812, 0.7135089635848999, 0.6934053897857666, 0.02310405671596527, 0.17135757207870483, 0.28332242369651794, 0.343019962310791, 0.2880895435810089, 0.2998031973838806, 0.08001846075057983, 0.10719859600067139, 0.12824314832687378, 0.003927173092961311, 0.04206192493438721, 0.06470289081335068, 0.036095526069402695, 0.04928380250930786, 0.058642253279685974, -0.009344635531306267, 0.06963406503200531, 0.1312279999256134, -0.05935414880514145, -0.04865729808807373, -0.060036804527044296, 0.04625355824828148, 0.0563165508210659, 0.050963230431079865],
-            intensity: 0.4
+            intensity: 0.6
             // color: [250 / 255, 214 / 255, 165 / 255]
         });
         scene.add(ambientLight);
 
         this._ambientLight = ambientLight;
 
-        var pointLight = new qtek.light.Point({
-            range: 8,
-            intensity: 1,
-            castShadow: false,
-            color: [1, 1, 1]
-            // color: [250 / 255, 214 / 255, 165 / 255]
-        });
-        pointLight.position.y = 1;
-        pointLight.position.z = 0;
-        scene.add(pointLight);
+        // var pointLight = new qtek.light.Point({
+        //     range: 8,
+        //     intensity: 1,
+        //     castShadow: false,
+        //     color: [1, 1, 1]
+        //     // color: [250 / 255, 214 / 255, 165 / 255]
+        // });
+        // pointLight.position.y = 1;
+        // pointLight.position.z = 0;
+        // scene.add(pointLight);
     }
 
     _initControl () {
@@ -326,6 +324,13 @@ class ViewMain {
         this._needsUpdate = true;
     }
 
+
+    // Hook for render other objects share same depth buffer
+    // renderOthersShareDepthBuffer() {}
+
+    // Hook for render other objects share same depth buffer
+    // renderOthersSeperateDepthBuffer() {}
+
     renderImmediately (accumulateStage) {
         this._needsUpdate = false;
         var time = Date.now();
@@ -338,7 +343,7 @@ class ViewMain {
         camera.update();
         this._gBuffer.update(renderer, scene, camera);
 
-        if (this.enableSsao) {
+        if (this.enableSSAO) {
             this._ssaoPass.render(renderer, camera);
         }
         else {
@@ -353,12 +358,20 @@ class ViewMain {
         if (this._skydome) {
             renderer.renderQueue([this._skydome], camera);
         }
-        // Render light probe
-        // renderer.renderQueue([this._envProbe], camera);
+
+        if (this.renderOthersShareDepthBuffer) {
+            this.renderOthersShareDepthBuffer(renderer, scene, camera);
+        }
+
+        if (this.renderOthersSeperateDepthBuffer) {
+            renderer.gl.clear(renderer.gl.DEPTH_BUFFER_BIT);
+            this.renderOthersSeperateDepthBuffer(renderer, scene, camera);
+        }
+
 
         this._colorFb.unbind(renderer);
 
-        if (this.enableSsr) {
+        if (this.enableSSR) {
             this._ssrPass.render(renderer, camera, this._rawOutput, this._ssaoPass.getTargetTexture());
             if (this._sourceNode) {
                 this._sourceNode.texture = this._ssrPass.getTargetTexture();

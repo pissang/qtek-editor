@@ -1,40 +1,51 @@
+import Vue from 'vue';
+
+// https://github.com/vuejs/vue/issues/2637
+// https://github.com/rpkilby/vue-nonreactive
+function nonreactive(val) {
+    const Observer = (new Vue()).$data
+                                .__ob__
+                                .constructor;
+
+    // Set dummy observer on value
+    val.__ob__ = new Observer({});
+    return val;
+
+}
+
 function quantity(val) {
     return Math.pow(10, Math.floor(Math.log(val) / Math.LN10));
 }
 
-function BooleanType(name, title, val) {
+function BooleanType(name, val) {
     return {
-        title: title,
         type: 'boolean',
         value: !!val
     };
 }
 
-function StringType(name, title, val) {
+function StringType(name, val) {
     return {
         name: name,
-        title: title,
         type: 'string',
         value: val
     };
 }
 
-function TextureType(name, title, src, textureType) {
+function TextureType(name, src, textureType) {
     return {
         name: name,
-        title: title,
         type: 'texture',
         textureType: textureType || '2d',
         value: src || ''
     };
 }
 
-function RangeType(name, title, val, min, max, step) {
+function RangeType(name, val, min, max, step) {
     min = min || 0;
     max = max == null ? 1 : max;
     return {
         name: name,
-        title: title,
         type: 'range',
         min: min,
         max: max,
@@ -43,33 +54,39 @@ function RangeType(name, title, val, min, max, step) {
     };
 }
 
-function ColorType(name, title, val) {
+function ColorType(name, val) {
     return {
         name: name,
-        title: title,
         type: 'color',
         value: val || ''
     };
 }
 
-function NumberType(name, title, val, step) {
+function NumberType(name, val, step) {
     return {
         name: name,
-        title: title,
         type: 'number',
         value: val || 0,
         step: step || quantity(val) / 100
     };
 }
 
-function VectorType(name, title, val, step) {
+function VectorType(name, val, step) {
     return {
         name: name,
-        title: title,
         type: 'vector',
         value: val || [],
         step: step || quantity(val[0]) / 100
     };
+}
+
+function EnumType(name, val, options) {
+    return {
+        name: name,
+        type: 'enum',
+        value:  val || options[0] || null,
+        options: options || []
+    }
 }
 
 var store = {
@@ -79,11 +96,9 @@ var store = {
 
     useFreeCamera: false,
 
-    enableSsao: true,
-
-    enableSsr: true,
-
     currentClip: 0,
+
+    clipNames: [],
 
     clips: [],
 
@@ -106,71 +121,101 @@ var store = {
         root: null
     },
 
+    enableSSAO: true,
+
+    enableSSR: true,
+
     ssao: {
-        radius: new RangeType('radius', 'Radius', 0.5, 0, 2, 0.005),
-        kernelSize: new RangeType('kernelSize', 'Kernel Size', 64, 1, 256, 1),
-        power: new RangeType('power', 'Power', 0.2, -5, 5, 0.01),
-        scale: new RangeType('scale', 'Scale', 0.5, 0, 5, 0.01),
-        blurSize: new RangeType('blurSize', 'Blur Size', 1, 0, 5),
-        bias: new RangeType('bias', 'Bias', 5e-4, 1e-4, 2e-1),
-        epsilon: new RangeType('epsilon', 'Epsilon', 0.1, 1e-3, 0.2)
+        radius: new RangeType('radius', 0.5, 0, 2, 0.005),
+        kernelSize: new RangeType('kernelSize', 64, 1, 256, 1),
+        power: new RangeType('power', 0.2, -5, 5, 0.01),
+        scale: new RangeType('scale', 0.5, 0, 5, 0.01),
+        blurSize: new RangeType('blurSize', 1, 0, 5),
+        bias: new RangeType('bias', 5e-4, 1e-4, 2e-1),
+        epsilon: new RangeType('epsilon', 0.1, 1e-3, 0.2)
     },
 
     ssr: {
-        maxIteration: new RangeType('maxIteration', 'Max Iteration', 32, 1, 256, 1),
-        maxBinaryIteration: new RangeType('maxBinaryIteration', 'Max BinaryIteration', 5, 0, 64, 1),
-        maxRayDistance: new RangeType('maxRayDistance', 'Max Ray Distance', 10, 0, 50),
-        pixelStride: new RangeType('pixelStride', 'Pixel Stride', 16, 1, 50, 1),
-        pixelStrideZCutoff: new RangeType('pixelStrideZCutoff', 'Pixel Stride Z Cutoff', 50, 1, 1000, 1),
-        eyeFadeStart: new RangeType('eyeFadeStart', 'Eye Fade Start', 0.5, 0, 1),
-        eyeFadeEnd: new RangeType('eyeFadeEnd', 'Eye Fade End', 1, 0, 1),
-        minGlossiness: new RangeType('minGlossiness', 'Min Glossiness', 0.4, 0, 1),
-        zThicknessThreshold: new RangeType('zThicknessThreshold', 'Z Thickness Threshold', 0.1, 0, 2)
+        maxIteration: new RangeType('maxIteration', 32, 1, 256, 1),
+        maxBinaryIteration: new RangeType('maxBinaryIteration', 5, 0, 64, 1),
+        maxRayDistance: new RangeType('maxRayDistance', 10, 0, 50),
+        pixelStride: new RangeType('pixelStride', 16, 1, 50, 1),
+        pixelStrideZCutoff: new RangeType('pixelStrideZCutoff', 50, 1, 1000, 1),
+        eyeFadeStart: new RangeType('eyeFadeStart', 0.5, 0, 1),
+        eyeFadeEnd: new RangeType('eyeFadeEnd', 1, 0, 1),
+        minGlossiness: new RangeType('minGlossiness', 0.4, 0, 1),
+        zThicknessThreshold: new RangeType('zThicknessThreshold', 0.1, 0, 2)
     },
 
     dof: {
-        focalDist: new RangeType('focalDist', 'Focal Dist', 5, 0.1, 20),
-        focalRange: new RangeType('focalRange', 'Focal Range', 1, 0, 5),
-        fstop: new RangeType('fstop', 'f/stop', 1.4, 1, 10)
+        focalDist: new RangeType('focalDist', 5, 0.1, 20),
+        focalRange: new RangeType('focalRange', 1, 0, 5),
+        fstop: new RangeType('fstop', 1.4, 1, 10)
     },
 
     inspectorType: '',
 
     inspectorMaterial: {
-        name: new StringType('name', 'Name'),
+        name: new StringType('name'),
 
-        color:  new ColorType('color', 'Base Color', '#ffffff'),
-        emission: new ColorType('emission', 'Emission', '#000000'),
+        color:  new ColorType('color', '#ffffff'),
+        emission: new ColorType('emission', '#000000'),
 
-        metalness: new RangeType('metalness', 'Metalness', 0, 0, 1),
-        roughness: new RangeType('roughness', 'Roughness', 0, 0, 1),
+        metalness: new RangeType('metalness', 0, 0, 1),
+        roughness: new RangeType('roughness', 0, 0, 1),
 
-        alpha: new RangeType('alpha', 'Alpha', 0, 0, 1),
+        alpha: new RangeType('alpha', 0, 0, 1),
 
-        emissionIntensity: new RangeType('emissionIntensity', 'Emission Intensity', 0, 0, 50),
+        emissionIntensity: new RangeType('emissionIntensity', 0, 0, 50),
 
-        uvRepeat: new VectorType('uvRepeat', 'UV Repeat', [1, 1]),
-        uvOffset: new VectorType('uvOffset', 'UV Repeat', [0, 0]),
+        uvRepeat: new VectorType('uvRepeat', [1, 1]),
+        uvOffset: new VectorType('uvOffset', [0, 0]),
 
-        diffuseMap: new TextureType('diffuseMap', 'Diffuse Map'),
-        normalMap: new TextureType('normalMap', 'Normal Map'),
-        roughnessMap: new TextureType('roughnessMap', 'Roughness Map'),
-        metalnessMap: new TextureType('metalnessMap', 'Metalness Map'),
-        emissiveMap: new TextureType('emissiveMap', 'Emissive Map')
+        diffuseMap: new TextureType('diffuseMap'),
+        normalMap: new TextureType('normalMap'),
+        roughnessMap: new TextureType('roughnessMap'),
+        metalnessMap: new TextureType('metalnessMap'),
+        emissiveMap: new TextureType('emissiveMap')
     },
 
     inspectorLight: {
         name: new StringType('name', 'Name'),
 
-        position: new VectorType('position', 'Position', [0, 0, 0]),
-        rotation: new VectorType('rotation', 'Rotation', [0, 0, 0]),
+        type: new EnumType('type', 'Light Type', 'point', [{
+            value: 'ambient',
+            title: 'Ambient'
+        }, {
+            value: 'directional',
+            title: 'Directional'
+        }, {
+            value: 'spot',
+            title: 'Spot'
+        }, {
+            value: 'point',
+            title: 'Point'
+        }]),
 
-        color: new ColorType('color', 'Color', '#ffffff'),
+        position: new VectorType('position', [0, 0, 0]),
+        rotation: new VectorType('rotation', [0, 0, 0]),
 
-        intensity: new RangeType('intensity', 'Intensity', 1, 0, 50)
+        color: new ColorType('color', '#ffffff'),
+
+        intensity: new RangeType('intensity', 1, 0, 50)
+    },
+
+    inspectorLightExtra: {
+        point: {
+            range: new NumberType('range', 10)
+        },
+        spot: {
+            range: new NumberType('range', 10),
+            umbraAngle: new RangeType('umbraAngle', 30, 0, 90),
+            penumbraAngle: new RangeType('penumbraAngle', 30, 0, 90)
+        }
     }
 };
 
+nonreactive(store.clips);
 
 for (var propName in store.inspectorMaterial) {
     if (store.inspectorMaterial[propName].type === 'texture') {

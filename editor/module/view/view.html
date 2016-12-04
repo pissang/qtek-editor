@@ -6,7 +6,7 @@
         <button @click="download">Download</button>
         &nbsp;
         <select v-model="currentClip">
-            <option value="{{index}}" v-for="(index, clipName) in clips">{{clipName}}</option>
+            <option value="{{index}}" v-for="(index, clipName) in clipNames">{{clipName}}</option>
         </select>
         <button @click="playAnimation">Play</button>
         <span>

@@ -1,7 +1,8 @@
 import ViewMain from '../../../common/ViewMain';
-import Scene from '../../../common/Scene';
+import SceneBridge from '../../../common/SceneBridge';
 import eventBus from '../../../common/eventBus';
 import store from '../../store';
+import BoundingGizmo from '../../helper/BoundingGizmo';
 
 import qtek from 'qtek';
 
@@ -14,51 +15,41 @@ export default {
     },
 
     ready () {
+
         let viewRoot = this.$el.querySelector('.view-main');
         let viewMain = this._viewMain = new ViewMain(viewRoot, {
             enablePicking: true
         });
-        let sceneLevel = this._sceneLevel = new Scene(viewMain, {
+        let sceneBridge = this._sceneBridge = new SceneBridge(viewMain, {
             textureRootPath: store.textureRootPath
         });
-        let self = this;
 
-        sceneLevel.loadModel('asset/model/kitchen/kitchen-mod.gltf')
-            .then(function (rootNode) {
-                rootNode.rotation.rotateX(-Math.PI / 2);
 
-                viewMain.focusOn(rootNode);
+        let boundingGizmo = new BoundingGizmo();
 
-                setInterval(saveLocal, 5000);
-
-                loadLocal();
-
-                viewMain.loadPanorama('asset/texture/Mans_Outside_2k.hdr', 0.5);
-
-                viewMain.updateEnvProbe();
-
-                sceneLevel.loadCameraAnimation('asset/model/kitchen/camera01-05.gltf')
-                    .then(function (clips) {
-                        let clipsArr = [];
-                        for (let key in clips) {
-                            clipsArr.push(clips[key]);
-
-                            store.clips.push(key);
-                        }
-                        self._clips = clipsArr;
-                    });
-
-                store.sceneTree.root = sceneLevel.getSceneTree();
-            });
-
-        window.addEventListener('resize', function () { viewMain.resize(); });
+        require('../../resource/template/kitchen').load(sceneBridge, store, function () {
+            setInterval(saveLocal, 5000);
+            loadLocal();
+        });
 
         eventBus.$on('select', function (mesh) {
             store.sceneTree.selected = mesh.name;
+
+            boundingGizmo.target = mesh;
         });
 
+        viewMain.renderOthersShareDepthBuffer = function (renderer, scene, camera) {
+
+        };
+        viewMain.renderOthersSeperateDepthBuffer = function (renderer, scene, camera) {
+            if (boundingGizmo.target) {
+                boundingGizmo.update();
+                renderer.renderQueue([boundingGizmo], camera);
+            }
+        };
+
         function inspectMaterial(mesh) {
-            let config = sceneLevel.getMaterialConfig(mesh.material);
+            let config = sceneBridge.getMaterialConfig(mesh.material);
 
             for (let key in config) {
                 if (store.inspectorMaterial[key]) {
@@ -68,47 +59,73 @@ export default {
         }
 
         function inspectLight(light) {
-            let config = sceneLevel.getLightConfig(light);
-
+            let config = sceneBridge.getLightBasicConfig(light);
+            let lightType = light.type.toLowerCase();
             for (let key in config) {
-                if (store.inspectorMaterial[key]) {
-                    store.inspectorMaterial[key].value = config[key];
+                if (store.inspectorLight[key]) {
+                    store.inspectorLight[key].value = config[key];
                 }
             }
-
+            if (store.inspectorLightExtra[lightType]) {
+                var extraConfig = sceneBridge.getLightExtraConfig(light);
+                for (let key in extraConfig) {
+                    if (store.inspectorLightExtra[lightType]) {
+                        store.inspectorLightExtra[lightType] = config[key];
+                    }
+                }
+            }
         }
 
         this.$watch('inspectorMaterial', function () {
-            let mesh = sceneLevel.getNodeByName(store.sceneTree.selected);
+            let mesh = sceneBridge.getNodeByName(store.sceneTree.selected);
 
             let currentMaterial = mesh && mesh.material;
-            if (!currentMaterial) {
-                return;
+            if (currentMaterial) {
+                let config = {};
+                for (let key in store.inspectorMaterial) {
+                    config[key] = store.inspectorMaterial[key].value;
+                }
+                sceneBridge.setMaterial(currentMaterial, config);
             }
 
-            let config = {};
-            for (let key in store.inspectorMaterial) {
-                config[key] = store.inspectorMaterial[key].value;
-            }
-            sceneLevel.setMaterial(currentMaterial, config);
+            viewMain.render();
         }, { deep: true });
 
         this.$watch('inspectorLight', function () {
+            let light = sceneBridge.getNodeByName(store.sceneTree.selected);
 
-        });
+            if (light instanceof qtek.Light) {
+                let config = {};
+                for (let key in store.inspectorLight) {
+                    config[key] = store.inspectorLight[key].value;
+                }
+                sceneBridge.setLightBasicConfig(light, config);
+
+                let inspectorLightExtra = store.inspectorLightExtra[light.type.toLowerCase()];
+                if (inspectorLightExtra) {
+                    let extraConfig = {};
+                    for (let key in inspectorLightExtra) {
+                        extraConfig[key] = inspectorLightExtra[key].value;
+                    }
+                    sceneBridge.setLightExtraConfig(light, extraConfig);
+                }
+            }
+
+            viewMain.render();
+        }, { deep: true });
 
         this.$watch('sceneTree.selected', function (value) {
-            let node = sceneLevel.getNodeByName(value);
+            let node = sceneBridge.getNodeByName(value);
             if (!node) {
                 store.inspectorType = '';
             }
             else if (node.material) {
                 store.inspectorType = 'material';
-
                 inspectMaterial(node);
             }
             else if (node instanceof qtek.Light) {
                 store.inspectorType = 'light';
+                inspectLight(node);
             }
             else {
                 store.inspectorType = '';
@@ -116,7 +133,7 @@ export default {
         });
 
         function saveLocal() {
-            let materialMap = sceneLevel.exportMaterials();
+            let materialMap = sceneBridge.exportMaterials();
 
             let postProcessingConfigs = POSTPROCESSINGS.reduce(function (obj, ppName) {
                 obj[ppName] = {};
@@ -149,7 +166,7 @@ export default {
                 }
             });
 
-            sceneLevel.loadConfig(config);
+            sceneBridge.loadConfig(config);
         }
 
         function setPostProcessParameter(ppName) {
@@ -172,15 +189,22 @@ export default {
             viewMain.switchFreeCamera(this.useFreeCamera);
         });
 
-        this.$watch('enableSsao + enableSsr', function () {
-            viewMain.enableSsao = this.enableSsao;
-            viewMain.enableSsr = this.enableSsr;
+        this.$watch('enableSSAO + enableSSR', function () {
+            viewMain.enableSSAO = this.enableSSAO;
+            viewMain.enableSSR = this.enableSSR;
             viewMain.render();
         });
 
         // https://github.com/jeresig/jquery.hotkeys
         $(document).bind('keydown', 'f', function () {
-            viewMain.focusOn(self._currentMesh);
+            eventBus.$emit('mesh:focus:selected');
+        });
+
+        eventBus.$on('mesh:focus:selected', function () {
+            let mesh = sceneBridge.getNodeByName(store.sceneTree.selected);
+            if (mesh && mesh.material) {
+                viewMain.focusOn(mesh);
+            }
         });
 
         eventBus.$on('render', function (renderStat) {
@@ -192,13 +216,14 @@ export default {
             store.renderStat.drawCallCount = renderStat.drawCallCount;
         });
 
+        eventBus.$on('resize', function () {
+            viewMain.resize();
+        });
     },
 
     methods: {
         focusCurrent: function () {
-            this._viewMain.focusOn(
-                this._currentMesh || this._rootNode
-            );
+            eventBus.$emit('mesh:focus:selected');
         },
 
         load: function () {
@@ -224,7 +249,7 @@ export default {
         },
 
         playAnimation: function () {
-            this._viewMain.playCameraAnimation(this._clips[store.currentClip]);
+            this._viewMain.playCameraAnimation(store.clips[store.currentClip]);
         }
     }
 };

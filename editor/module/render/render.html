@@ -1,15 +1,15 @@
 <div>
     <div id="ssao">
-        <panel title="Screen Space Ambient Occulusion">
+        <panel>
             <div slot="header">
-                <h5 title="Screen Space Ambient Occulusion">
-                    Screen Space Ambient Occulusion
+                <h5 title="{{ $t('render.ssao.title') }}">
+                    {{ $t('render.ssao.title') }}
                 </h5>
-                <input type="checkbox" v-model="enableSsao" />
+                <input type="checkbox" v-model="enableSSAO" />
             </div>
             <div slot="body" class="property-rows">
                 <div class="property-row" v-for="(index, item) in ssao">
-                    <label>{{item.title}}</label>
+                    <label>{{ $t('render.ssao.' + item.name ) }}</label>
                     <component :is="item.type" :value.sync="item.value" :option="item"></component>
                 </div>
             </div>
@@ -19,14 +19,14 @@
     <div id="ssr">
         <panel>
             <div slot="header">
-                <h5 title="Screen Space Reflection">
-                    Screen Space Reflection
+                <h5 title="{{ $t('render.ssr.title') }}">
+                    {{ $t('render.ssr.title') }}
                 </h5>
-                <input type="checkbox" v-model="enableSsr" />
+                <input type="checkbox" v-model="enableSSR" />
             </div>
             <div slot="body" class="property-rows">
                 <div class="property-row" v-for="(index, item) in ssr">
-                    <label>{{item.title}}</label>
+                    <label>{{ $t('render.ssr.' + item.name ) }}</label>
                     <component :is="item.type" :value.sync="item.value" :option="item"></component>
                 </div>
             </div>
@@ -36,13 +36,13 @@
     <div id="dof">
         <panel>
             <div slot="header">
-                <h5 title="Depth of Field">
-                    Depth of Field
+                <h5 title="{{ $t('render.dof.title') }}">
+                    {{ $t('render.dof.title') }}
                 </h5>
             </div>
             <div slot="body" class="property-rows">
                 <div class="property-row" v-for="(index, item) in dof">
-                    <label>{{item.title}}</label>
+                    <label>{{ $t('render.dof.' + item.name ) }}</label>
                     <component :is="item.type" :value.sync="item.value" :option="item"></component>
                 </div>
             </div>

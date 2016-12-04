@@ -1,5 +1,5 @@
 import ViewMain from '../common/ViewMain';
-import Scene from '../common/Scene';
+import SceneBridge from '../common/SceneBridge';
 import qtek from 'qtek';
 
 export default {
@@ -11,7 +11,7 @@ export default {
     ready () {
         var viewRoot = this.$el.querySelector('.view-main');
         var viewMain = this._viewMain = new ViewMain(viewRoot);
-        var sceneLevel = this._sceneLevel = new Scene(viewMain, {
+        var sceneBridge = this._sceneBridge = new SceneBridge(viewMain, {
             textureRootPath: 'asset/model/kitchen/texture/'
         });
 
@@ -31,15 +31,15 @@ export default {
             playClip(0);
         }
 
-        sceneLevel.loadModel('asset/model/kitchen/kitchen-mod.gltf')
+        sceneBridge.loadModel('asset/model/kitchen/kitchen.gltf')
             .then(function (rootNode) {
                 viewMain.loadPanorama('asset/texture/Mans_Outside_2k.hdr', 0.5);
                 viewMain.updateEnvProbe();
                 rootNode.rotation.rotateX(-Math.PI / 2);
 
-                $.getJSON('asset/model/kitchen/mat-mod.json').then(function (config) {
-                    sceneLevel.loadConfig(config);
-                    sceneLevel.loadCameraAnimation('asset/model/kitchen/camera01-05.gltf')
+                $.getJSON('asset/model/kitchen/mat.json').then(function (config) {
+                    sceneBridge.loadConfig(config);
+                    sceneBridge.loadCameraAnimation('asset/model/kitchen/camera01-05.gltf')
                         .then(function (clips) {
                             var clipsArr = [];
                             for (var name in clips) {

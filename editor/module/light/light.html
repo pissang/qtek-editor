@@ -24,5 +24,14 @@
                 <range :value.sync="inspectorLight.intensity.value" :option="inspectorLight.intensity"></range>
             </div>
         </panel>
+
+        <panel class="property-row" :title="$t('light.types.' + inspectorLight.type.value)">
+            <div v-if="inspectorLight.type.value === 'point'">
+
+            </div>
+            <div v-if="inspectorLight.type.value === 'spot'">
+
+            </div>
+        </panel>
     </div>
 </div>

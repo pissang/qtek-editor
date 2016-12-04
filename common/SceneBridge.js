@@ -1,4 +1,8 @@
 
+/**
+ * Bridge of scene of storage and scene of rendering
+ */
+
 import qtek from 'qtek';
 import colorUtil from 'zrender/lib/tool/color';
 
@@ -33,7 +37,7 @@ function parseColor(color) {
     return color || [0, 0, 0];
 }
 
-class Scene {
+class SceneBridge {
 
     constructor(viewMain, option) {
         this._viewMain = viewMain;
@@ -157,6 +161,85 @@ class Scene {
         return config;
     }
 
+    /**
+     * Get light common config like transform, color
+     */
+    getLightBasicConfig (light) {
+        var rot = new qtek.math.Vector3();
+        rot.eulerFromQuat(light.rotation);
+        return {
+            type: light.type.toLowerCase().replace('_light', ''),
+            position: Array.prototype.slice.call(light.position._array),
+            rotation: Array.prototype.slice.call(rot._array),
+            color: stringifyColor(light.color),
+            intensity: light.intensity,
+            // castShadow: light.castShadow
+        };
+    }
+
+    /**
+     * Set light from config.
+     */
+    setLightBasicConfig (light, config) {
+        var euler = new qtek.math.Vector3();
+        euler.setArray(config.rotation);
+        light.position.setArray(config.position);
+        light.rotation.fromEuler(euler);
+        light.color = parseColor(config.color);
+        light.intensity = config.intensity;
+        // light.castShadow = config.castShadow;
+    }
+
+    /**
+     * Get extra light config according to the light type
+     */
+    getLightExtraConfig (light) {
+        switch (light.type.toLowerCase().replace('_light', '')) {
+            case 'ambient':
+            case 'directional':
+                return {};
+            case 'point':
+                return {
+                    range: light.range
+                };
+            case 'spot':
+                return {
+                    range: light.range,
+                    umbraAngle: light.umbraAngle,
+                    penumbraAngle: light.penumbraAngle,
+                    falloffFactor: light.falloffFactor
+                };
+
+        }
+    }
+
+    /**
+     * Set light from extra config according to the light type.
+     */
+    setLightExtraConfig (light, config) {
+        switch (light.type.toLowerCase().replace('_light', '')) {
+            case 'ambient':
+            case 'directional':
+                break;
+            case 'point':
+                light.range = config.range;
+                break;
+            case 'spot':
+                light.range = config.range;
+                light.umbraAngle = config.umbraAngle;
+                light.penumbraAngle = config.penumbraAngle;
+                light.falloffFactor = config.falloffFactor;
+        }
+    }
+
+    /**
+     * Load scene config.
+     * Including:
+     *  materials,
+     *  lights,
+     *  postprocessings,
+     *  camera
+     */
     loadConfig (config) {
         var viewMain = this._viewMain;
         var self = this;
@@ -215,6 +298,10 @@ class Scene {
         return this._viewMain.getScene().getNode(name);
     }
 
+    getViewMain () {
+        return this._viewMain;
+    }
+
     _buildTree (node) {
         var root = {};
 
@@ -248,4 +335,4 @@ class Scene {
     }
 }
 
-export default Scene;
+export default SceneBridge;

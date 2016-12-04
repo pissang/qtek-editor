@@ -47,6 +47,7 @@ import Scene from './module/scene/Scene.vue';
 import Entity from './module/entity/Entity.vue';
 import Material from './module/material/Material.vue';
 import Light from './module/light/Light.vue';
+import eventBus from '../common/eventBus';
 
 import store from './store';
 
@@ -65,6 +66,12 @@ export default {
         'scene': Scene,
         'entity': Entity,
         'light': Light
+    },
+
+    ready () {
+        $(window).resize(function () {
+            eventBus.$emit('resize');
+        });
     }
 };
 </script>
