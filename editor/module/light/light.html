@@ -12,7 +12,13 @@
             </div>
             <div>
                 <label class="property-name">Rotation</label>
-                <vector :value.sync="inspectorLight.rotation.value" :option="inspectorLight.position"></vector>
+                <vector :value.sync="inspectorLight.rotation.value" :option="inspectorLight.rotation"></vector>
+            </div>
+            <div>
+                <label class="property-name">
+                    Target <input type="checkbox" v-model="inspectorLight.fixedTarget.value"></input>
+                </label>
+                <vector :value.sync="inspectorLight.target.value" :option="inspectorLight.target"></vector>
             </div>
         </panel>
 

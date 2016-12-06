@@ -23,13 +23,13 @@ var EnvironmentProbe = qtek.Node.extend({
             this.position.add(this.box.min).add(this.box.max).scale(0.5);
         }
 
-        this._environmentMap = new qtek.TextureCube({
+        var envMap = new qtek.TextureCube({
             width: this.resolution,
             height: this.resolution,
             type: qtek.Texture.FLOAT
         });
         var envMapPass = new qtek.prePass.EnvironmentMap({
-            texture: this._environmentMap,
+            texture: envMap,
             shadowMapPass: shadowMapPass,
             far: this.range
         });
@@ -37,12 +37,16 @@ var EnvironmentProbe = qtek.Node.extend({
 
         envMapPass.render(renderer, scene);
 
+        this.setEnvironmentMap(renderer, envMap)
+    },
+
+    setEnvironmentMap: function (renderer, envMap) {
         if (this.prefilter) {
             var result = qtek.util.cubemap.prefilterEnvironmentMap(
-                renderer, this._environmentMap
+                renderer, envMap
             );
             // Dispose previous
-            this._environmentMap.dispose(renderer.gl);
+            envMap.dispose(renderer.gl);
 
             this._environmentMap = result.environmentMap;
 
@@ -52,7 +56,6 @@ var EnvironmentProbe = qtek.Node.extend({
 
             this._brdfLookup = result.brdfLookup;
         }
-
     },
 
     getEnvironmentMap: function () {

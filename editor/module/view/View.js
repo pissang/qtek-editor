@@ -8,6 +8,19 @@ import qtek from 'qtek';
 
 let POSTPROCESSINGS = ['ssao', 'ssr', 'dof'];
 
+var templates = {
+    kitchen: require('../../resource/template/kitchen'),
+    robot: require('../../resource/template/robot')
+};
+// Params parser
+var params = {};
+(location.search || '').substr(1).split('&').forEach(function (item) {
+    var kv = item.split('=');
+    params[kv[0]] = kv[1];
+});
+
+var usedTpl = params.tpl || 'kitchen';
+
 export default {
 
     data () {
@@ -27,7 +40,7 @@ export default {
 
         let boundingGizmo = new BoundingGizmo();
 
-        require('../../resource/template/kitchen').load(sceneBridge, store, function () {
+        templates[usedTpl].load(sceneBridge, store, function () {
             setInterval(saveLocal, 5000);
             loadLocal();
         });

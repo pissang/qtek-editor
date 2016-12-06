@@ -5,6 +5,7 @@
 
 import qtek from 'qtek';
 import colorUtil from 'zrender/lib/tool/color';
+import EnvironmentProbe from './graphic/EnvironmentProbe';
 
 var SIMPLE_PROPERTIES = ['color', 'roughness', 'alpha', 'metalness', 'emission', 'emissionIntensity', 'uvRepeat', 'uvOffset'];
 var TEXTURE_PROPERTIES = ['diffuseMap', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap'];
@@ -169,14 +170,17 @@ class SceneBridge {
      * Get light common config like transform, color
      */
     getLightBasicConfig (light) {
-        var rot = new qtek.math.Vector3();
-        rot.eulerFromQuat(light.rotation);
+        light.$euler = light.$euler || new qtek.math.Vector3();
+        light.$euler.eulerFromQuat(light.rotation);
         return {
             type: extractLightType(light.type),
             position: Array.prototype.slice.call(light.position._array),
-            rotation: Array.prototype.slice.call(rot._array),
+            rotation: Array.prototype.slice.call(light.$euler._array),
             color: stringifyColor(light.color),
             intensity: light.intensity,
+
+            fixedTarget: light.$fixedTarget,
+            target: light.$target ? Array.prototype.slice.call(light.$target._array) : [0, 0, 0]
             // castShadow: light.castShadow
         };
     }
@@ -188,16 +192,23 @@ class SceneBridge {
         if (config.position) {
             light.position.setArray(config.position);
         }
-        if (config.fixedTarget && config.target) {
-            var target = new qtek.math.Vector3();
-            target.setArray(config.target);
-            light.lookAt(target);
+        if (config.fixedTarget != null) {
+            light.$fixedTarget = config.fixedTarget;
         }
-        else {
-            var euler = new qtek.math.Vector3();
-            euler.setArray(config.rotation);
-            light.rotation.fromEuler(euler);
+        if (config.target) {
+            light.$target = light.$target || new qtek.math.Vector3();
+            light.$target.setArray(config.target);
         }
+
+        if (light.$fixedTarget && light.$target) {
+            light.lookAt(light.$target);
+        }
+        else if (config.rotation) {
+            light.$euler = light.$euler || new qtek.math.Vector3();
+            light.$euler.setArray(config.rotation);
+            light.rotation.fromEuler(light.$euler);
+        }
+
         if (config.color) {
             light.color = parseColor(config.color);
         }
@@ -277,6 +288,17 @@ class SceneBridge {
         this._viewMain.addLight(light);
 
         return light;
+    }
+
+    createEnvironmentProbe (box) {
+        var envProbe = new EnvironmentProbe();
+        if (box && box.min && box.max) {
+            var envBox = new qtek.math.BoundingBox();
+            envBox.min.setArray(box.min);
+            envBox.max.setArray(box.max);
+            envProbe.box = envBox;
+        }
+        this._viewMain.addEnvironmentProbe(envProbe);
     }
 
     /**

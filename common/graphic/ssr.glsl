@@ -317,7 +317,7 @@ uniform float blurSize : 2.0;
 
 void main()
 {
-    @import qtek.compositor.kernel.gaussian_9
+    @import qtek.compositor.kernel.gaussian_13
 
     vec4 centerNormalTexel = texture2D(normalTex, v_Texcoord);
     float g = centerNormalTexel.a;
@@ -329,8 +329,8 @@ void main()
     float weightAll = 0.0;
 
     vec3 centerNormal = centerNormalTexel.rgb * 2.0 - 1.0;
-    for (int i = 0; i < 9; i++) {
-        vec2 coord = vec2(clamp(v_Texcoord.x + (float(i) - 4.0) * off, 0.0, 1.0), v_Texcoord.y);
+    for (int i = 0; i < 13; i++) {
+        vec2 coord = vec2(clamp(v_Texcoord.x + (float(i) - 6.0) * off, 0.0, 1.0), v_Texcoord.y);
         float w = gaussianKernel[i] * clamp(dot(centerNormal, texture2D(normalTex, coord).rgb * 2.0 - 1.0), 0.0, 1.0);
         weightAll += w;
         sum += decodeHDR(texture2D(colorTex, coord)) * w;
@@ -354,7 +354,7 @@ uniform float blurSize : 2.0;
 
 void main()
 {
-    @import qtek.compositor.kernel.gaussian_9
+    @import qtek.compositor.kernel.gaussian_13
 
     vec4 centerNormalTexel = texture2D(normalTex, v_Texcoord);
     float g = centerNormalTexel.a;
@@ -367,8 +367,8 @@ void main()
 
     vec3 centerNormal = centerNormalTexel.rgb * 2.0 - 1.0;
 
-    for (int i = 0; i < 9; i++) {
-        vec2 coord = vec2(v_Texcoord.x, clamp(v_Texcoord.y + (float(i) - 4.0) * off, 0.0, 1.0));
+    for (int i = 0; i < 13; i++) {
+        vec2 coord = vec2(v_Texcoord.x, clamp(v_Texcoord.y + (float(i) - 6.0) * off, 0.0, 1.0));
         float w = gaussianKernel[i] * clamp(dot(centerNormal, texture2D(normalTex, coord).rgb * 2.0 - 1.0), 0.0, 1.0);
         weightAll += w;
         sum += decodeHDR(texture2D(colorTex, coord)) * w;

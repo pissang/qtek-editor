@@ -4,11 +4,9 @@ import GBuffer from './graphic/GBuffer';
 import SSAOPass from './graphic/AlchemyAOPass';
 import SSRPass from './graphic/SSRPass';
 import eventBus from './eventBus';
-import EnvironmentProbe from './graphic/EnvironmentProbe';
 import TemporalSuperSampling from './graphic/TemporalSuperSampling';
 
 var hdrJson = JSON.parse(require('text!./graphic/composite.json'));
-
 
 class ViewMain {
     constructor(dom, option) {
@@ -71,8 +69,6 @@ class ViewMain {
 
         this._initCompositor();
 
-        this.addEnvProbe();
-
         this._debugPass = new qtek.compositor.Pass({
             fragment: qtek.Shader.source('qtek.compositor.output')
         });
@@ -128,25 +124,18 @@ class ViewMain {
         this._scene.add(light);
     }
 
-    addEnvProbe (position) {
-        var envProbe = new EnvironmentProbe();
-        var envBox = new qtek.math.BoundingBox();
-        envBox.min.set(-2.6346957683563232, 0, -3.347585678100586);
-        envBox.max.set(3.284651517868042, 3.20135760307312, 5.092456817626953);
+    addEnvironmentProbe (envProbe) {
+        // var sphere = new qtek.Mesh({
+        //     geometry: new qtek.geometry.Sphere(),
+        //     material: new qtek.StandardMaterial({
+        //         color: [1, 1, 1],
+        //         roughness: 0,
+        //         metalness: 1
+        //     })
+        // });
+        // sphere.scale.set(0.2, 0.2, 0.2);
 
-        envProbe.box = envBox;
-
-        var sphere = new qtek.Mesh({
-            geometry: new qtek.geometry.Sphere(),
-            material: new qtek.StandardMaterial({
-                color: [1, 1, 1],
-                roughness: 0,
-                metalness: 1
-            })
-        });
-        sphere.scale.set(0.2, 0.2, 0.2);
-
-        sphere.update();
+        // sphere.update();
 
         this._envProbe = envProbe;
     }
@@ -473,7 +462,7 @@ class ViewMain {
 
                 self.render();
 
-                cb && cb();
+                cb && cb(envMap);
             }
         );
         // TODO Use box
@@ -494,7 +483,7 @@ class ViewMain {
         return envMap;
     }
 
-    updateEnvProbe () {
+    updateEnvironmentProbe () {
         if (this._envProbe) {
             var envProbe = this._envProbe;
 
@@ -502,18 +491,34 @@ class ViewMain {
                 this._renderer, this._scene, this._shadowMapPass
             );
 
-            this._scene.traverse(function (node) {
-                if (node.material) {
-                    node.material.environmentMap = envProbe.getEnvironmentMap();
-                    node.material.brdfLookup = envProbe.getBRDFLookup();
-                    node.material.environmentBox = envProbe.box;
-                }
-            }, this);
-
-            this._ambientLight.coefficients = envProbe.getSHCoefficient();
-
-            this.render();
+            this._envProbeUpdated();
         }
+    }
+
+    /**
+     * Set environment map for Image Based Lighting
+     */
+    setEnvironmentMap (envMap) {
+        if (this._envProbe) {
+            this._envProbe.setEnvironmentMap(this._renderer, envMap);
+            this._envProbeUpdated();
+        }
+    }
+
+    _envProbeUpdated () {
+        var envProbe = this._envProbe;
+
+        this._scene.traverse(function (node) {
+            if (node.material) {
+                node.material.environmentMap = envProbe.getEnvironmentMap();
+                node.material.brdfLookup = envProbe.getBRDFLookup();
+                node.material.environmentBox = envProbe.box;
+            }
+        }, this);
+
+        this._ambientLight.coefficients = envProbe.getSHCoefficient();
+
+        this.render();
     }
 
     setSSAOParameter (name, value) {

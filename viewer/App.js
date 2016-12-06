@@ -31,11 +31,24 @@ export default {
             playClip(0);
         }
 
+        // Light
+        var light = sceneBridge.createLight({
+            type: 'directional',
+            color: [1, 1, 1],
+            intensity: 20,
+            position: [-5, 7, -18],
+            fixedTarget: true,
+            target: [0, 0, 0]
+        });
+        light.shadowBias = 0.005;
+        light.shadowResolution = 2048;
+
         sceneBridge.loadModel('asset/model/kitchen/kitchen.gltf')
             .then(function (rootNode) {
                 viewMain.loadPanorama('asset/texture/Mans_Outside_2k.hdr', 0.5);
-                viewMain.updateEnvProbe();
                 rootNode.rotation.rotateX(-Math.PI / 2);
+
+                viewMain.updateEnvironmentProbe();
 
                 $.getJSON('asset/model/kitchen/mat.json').then(function (config) {
                     sceneBridge.loadConfig(config);
@@ -52,18 +65,6 @@ export default {
                     viewMain.render();
                 });
             });
-
-        // Light
-        var light = sceneBridge.createLight({
-            type: 'directional',
-            color: [1, 1, 1],
-            intensity: 20,
-            position: [-5, 7, -18],
-            fixedTarget: true,
-            target: [0, 0, 0]
-        });
-        light.shadowBias = 0.005;
-        light.shadowResolution = 2048;
 
         // var audio = document.createElement('audio');
         // audio.src = 'asset/sound/bensound-acousticbreeze.mp3';

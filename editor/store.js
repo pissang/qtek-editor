@@ -91,7 +91,6 @@ function EnumType(name, val, options) {
 
 var store = {
 
-    // textureRootPath: 'http://localhost/baidu-screen/asset/texture/zhanqu2/',
     textureRootPath: window.location.origin + '/qtek-editor/asset/model/kitchen/texture/',
 
     useFreeCamera: false,
@@ -127,9 +126,9 @@ var store = {
 
     ssao: {
         radius: new RangeType('radius', 0.5, 0, 2, 0.005),
-        kernelSize: new RangeType('kernelSize', 64, 1, 256, 1),
-        power: new RangeType('power', 0.2, -5, 5, 0.01),
-        scale: new RangeType('scale', 0.5, 0, 5, 0.01),
+        kernelSize: new RangeType('kernelSize', 32, 1, 256, 1),
+        power: new RangeType('power', 1, -5, 5, 0.01),
+        scale: new RangeType('scale', 1, 0, 5, 0.01),
         blurSize: new RangeType('blurSize', 1, 0, 5),
         bias: new RangeType('bias', 5e-4, 1e-4, 2e-1),
         epsilon: new RangeType('epsilon', 0.1, 1e-3, 0.2)
@@ -150,7 +149,7 @@ var store = {
     dof: {
         focalDist: new RangeType('focalDist', 5, 0.1, 20),
         focalRange: new RangeType('focalRange', 1, 0, 5),
-        fstop: new RangeType('fstop', 1.4, 1, 10)
+        fstop: new RangeType('fstop', 8, 1, 10)
     },
 
     inspectorType: '',
@@ -200,7 +199,6 @@ var store = {
 
         fixedTarget: new BooleanType('fixedTarget', false),
         target: new VectorType('target', [0, 0, 0]),
-
 
         color: new ColorType('color', '#ffffff'),
 
