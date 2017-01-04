@@ -91,7 +91,7 @@ function EnumType(name, val, options) {
 
 var store = {
 
-    textureRootPath: window.location.origin + '/qtek-editor/asset/model/kitchen/texture/',
+    textureRootPath: window.location.origin + '/qtek-editor/asset/model/court/texture/',
 
     useFreeCamera: false,
 
@@ -126,7 +126,7 @@ var store = {
 
     ssao: {
         radius: new RangeType('radius', 0.5, 0, 2, 0.005),
-        kernelSize: new RangeType('kernelSize', 32, 1, 256, 1),
+        kernelSize: new RangeType('kernelSize', 12, 1, 256, 1),
         power: new RangeType('power', 1, -5, 5, 0.01),
         scale: new RangeType('scale', 1, 0, 5, 0.01),
         blurSize: new RangeType('blurSize', 1, 0, 5),

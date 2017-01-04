@@ -299,6 +299,8 @@ class SceneBridge {
             envProbe.box = envBox;
         }
         this._viewMain.addEnvironmentProbe(envProbe);
+
+        return envProbe;
     }
 
     /**
@@ -385,7 +387,7 @@ class SceneBridge {
             else if (parent instanceof qtek.Mesh) {
                 scope.type = 'mesh';
             }
-            else if (parent instanceof qtek.particleSystem.ParticleRenderable) {
+            else if (parent instanceof qtek.particle.ParticleRenderable) {
                 scope.type = 'particle';
             }
             else {

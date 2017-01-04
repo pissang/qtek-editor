@@ -10,7 +10,9 @@ let POSTPROCESSINGS = ['ssao', 'ssr', 'dof'];
 
 var templates = {
     kitchen: require('../../resource/template/kitchen'),
-    robot: require('../../resource/template/robot')
+    robot: require('../../resource/template/robot'),
+    audi: require('../../resource/template/audi'),
+    court: require('../../resource/template/court')
 };
 // Params parser
 var params = {};
@@ -51,7 +53,7 @@ export default {
             boundingGizmo.target = mesh;
         });
 
-        viewMain.renderOthersShareDepthBuffer = function (renderer, scene, camera) {        };
+        viewMain.renderOthersShareDepthBuffer = function (renderer, scene, camera) { };
         viewMain.renderOthersAfterCompositing = function (renderer, scene, camera) {
             if (boundingGizmo.target) {
                 boundingGizmo.update();

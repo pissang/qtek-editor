@@ -21,7 +21,7 @@ PostProcessPass.prototype.getUniform = function (key) {
 
 PostProcessPass.prototype.render = function (renderer) {
     if (this._frameBuffer) {
-        this._frameBuffer.attach(renderer.gl, this._targetTexture);
+        this._frameBuffer.attach(this._targetTexture);
     }
     this._pass.render(renderer, this._frameBuffer);
 };
@@ -41,7 +41,7 @@ PostProcessPass.prototype.getShader = function () {
 
 PostProcessPass.prototype.clear = function (renderer) {
     if (this._frameBuffer) {
-        this._frameBuffer.attach(renderer.gl, this._targetTexture);
+        this._frameBuffer.attach(this._targetTexture);
         this._frameBuffer.bind(renderer);
     }
     renderer.gl.clearColor(1, 1, 1, 1);

@@ -4,7 +4,7 @@ module.exports = {
         var light = sceneBridge.createLight({
             type: 'directional',
             color: [1, 1, 1],
-            intensity: 20,
+            intensity: 10,
             position: [-5, 7, -18],
             fixedTarget: true,
             target: [0, 0, 0]
@@ -25,7 +25,7 @@ module.exports = {
 
                 cb && cb();
 
-                sceneBridge.getViewMain().loadPanorama('asset/texture/Mans_Outside_2k.hdr', 0.5);
+                sceneBridge.getViewMain().loadPanorama('asset/texture/Mans_Outside_2k.hdr', -1);
 
                 sceneBridge.getViewMain().updateEnvironmentProbe();
 

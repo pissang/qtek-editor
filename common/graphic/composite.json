@@ -54,7 +54,7 @@
                 }
             },
             "parameters" : {
-                "threshold" : 4,
+                "threshold" : 10,
                 "scale": 4,
                 "textureSize": "expr([width / 2, height / 2])"
             },
@@ -63,7 +63,6 @@
                 "ANTI_FLICKER": null
             }
         },
-
         {
             "name" : "bright2",
             "shader" : "#source(qtek.compositor.hdr.bright)",
@@ -73,20 +72,19 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 4)",
-                        "height" : "expr(height / 4)"
+                        "width" : "expr(width / 2)",
+                        "height" : "expr(height / 2)"
                     }
                 }
             },
             "parameters" : {
-                "threshold": 20,
+                "threshold": 30,
                 "scale": 0.01
             },
             "defines": {
                 "RGBM": null
             }
         },
-
 
         {
             "name": "bright_downsample_4",
@@ -190,7 +188,7 @@
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureWidth": "expr( width / 32 )"
+                "textureSize": "expr( [width / 32, height / 32] )"
             },
             "defines": {
                 "RGBM": null
@@ -212,7 +210,7 @@
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureHeight": "expr( height / 32 )"
+                "textureSize": "expr( [width / 32, height / 32] )"
             },
             "defines": {
                 "RGBM": null
@@ -237,7 +235,7 @@
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureWidth": "expr( width / 16 )"
+                "textureSize": "expr( [width / 16, height / 16] )"
             },
             "defines": {
                 "RGBM": null
@@ -259,7 +257,7 @@
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureHeight": "expr( height / 16 )"
+                "textureSize": "expr( [width / 16, height / 16] )"
             },
             "defines": {
                 "RGBM": null
@@ -306,7 +304,7 @@
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureWidth": "expr( width / 8 )"
+                "textureSize": "expr( [width / 8, height / 8] )"
             },
             "defines": {
                 "RGBM": null
@@ -328,7 +326,7 @@
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureHeight": "expr( height / 8 )"
+                "textureSize": "expr( [width / 8, height / 8] )"
             },
             "defines": {
                 "RGBM": null
@@ -378,7 +376,7 @@
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureWidth": "expr( width / 4 )"
+                "textureSize": "expr( [width / 4, height / 4] )"
             },
             "defines": {
                 "RGBM": null
@@ -400,7 +398,7 @@
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureHeight": "expr( height / 4 )"
+                "textureSize": "expr( [width / 4, height / 4] )"
             },
             "defines": {
                 "RGBM": null
@@ -449,7 +447,7 @@
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureWidth": "expr( width / 2 )"
+                "textureSize": "expr( [width / 2, height / 2] )"
             },
             "defines": {
                 "RGBM": null
@@ -471,7 +469,7 @@
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureHeight": "expr( height / 2 )"
+                "textureSize": "expr( [width / 2, height / 2] )"
             },
             "defines": {
                 "RGBM": null
@@ -763,9 +761,10 @@
 
         {
             "name": "dof_far_blur_upsample",
-            "shader": "#source(qtek.compositor.upsample)",
+            "shader": "#source(qtek.compositor.dof.upsample)",
             "inputs": {
-                "texture": "dof_far_blur_hexangonal_3"
+                "texture": "dof_far_blur_hexangonal_3",
+                "coc": "coc"
             },
             "outputs": {
                 "color": {
@@ -787,9 +786,10 @@
 
         {
             "name": "dof_near_blur_upsample",
-            "shader": "#source(qtek.compositor.upsample)",
+            "shader": "#source(qtek.compositor.dof.upsample)",
             "inputs": {
-                "texture": "dof_near_blur_hexangonal_3"
+                "texture": "dof_near_blur_hexangonal_3",
+                "coc": "coc"
             },
             "outputs": {
                 "color": {
@@ -864,13 +864,13 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 4)",
-                        "height" : "expr(height / 4)"
+                        "width" : "expr(width / 2)",
+                        "height" : "expr(height / 2)"
                     }
                 }
             },
             "parameters" : {
-                "textureSize" : "expr([width / 4, height / 4])",
+                "textureSize" : "expr([width / 2, height / 2])",
                 "lensColor" : "#lenscolor"
             },
             "defines": {
@@ -886,14 +886,14 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 4)",
-                        "height": "expr(height / 4)"
+                        "width" : "expr(width / 2)",
+                        "height" : "expr(height / 2)"
                     }
                 }
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureWidth": "expr( width / 4 )"
+                "textureSize" : "expr([width / 2, height / 2])"
             },
             "defines": {
                 "RGBM": null
@@ -908,20 +908,19 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 4)",
-                        "height": "expr(height / 4)"
+                        "width" : "expr(width / 2)",
+                        "height" : "expr(height / 2)"
                     }
                 }
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureHeight": "expr( height / 4 )"
+                "textureSize" : "expr([width / 2, height / 2])"
             },
             "defines": {
                 "RGBM": null
             }
         },
-
         {
             "name" : "tonemapping",
             "shader" : "#source(qtek.compositor.hdr.tonemapping)",
@@ -937,6 +936,10 @@
                         "height" : "expr(height)"
                     }
                 }
+            },
+            "parameters" : {
+                "blurSize" : 1,
+                "lensflareIntensity" : 0.2
             },
             "defines": {
                 "RGBM_DECODE": null

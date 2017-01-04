@@ -126,7 +126,7 @@ void main()
 
     float centerDepth = centerDepthTexel.r;
     for (int i = 0; i < 13; i++) {
-        vec2 coord = vec2(clamp(v_Texcoord.x + (float(i) - 6.0) * off, 0.0, 1.0), v_Texcoord.y);
+        vec2 coord = vec2(clamp(v_Texcoord.x + float(i - 6) * off, 0.0, 1.0), v_Texcoord.y);
         // Use depth in bilateral filter instead normal.
         // Use normal will cause jitter in the corner.
         float w = gaussianKernel[i] * max(0.0, 1.0 - float(EDGE_SHARPNESS) * 2000.0 * abs(centerDepth - texture2D(depthTex, coord).r));
@@ -165,7 +165,7 @@ void main()
     float centerDepth = centerDepthTexel.r;
 
     for (int i = 0; i < 13; i++) {
-        vec2 coord = vec2(v_Texcoord.x, clamp(v_Texcoord.y + (float(i) - 6.0) * off, 0.0, 1.0));
+        vec2 coord = vec2(v_Texcoord.x, clamp(v_Texcoord.y + float(i - 6) * off, 0.0, 1.0));
         float w = gaussianKernel[i] * max(0.0, 1.0 - float(EDGE_SHARPNESS) * 2000.0 * abs(centerDepth - texture2D(depthTex, coord).r));
         weightAll += w;
         sum += texture2D(colorTex, coord) * w;

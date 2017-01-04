@@ -17,12 +17,12 @@ export default {
 
         function playAnimationSequerence(clips) {
             function randomClipIndex(lastIndex) {
-                return (lastIndex + 1) & clips.length;
+                return (lastIndex + 1) % clips.length;
                 // return (lastIndex + Math.round(Math.random()) + 1) % clips.length;
             }
             function playClip(clipIndex) {
                 var clip = clips[clipIndex];
-                clip.playbackRate = 0.4;
+                clip.playbackRate = 0.8;
                 clip.onfinish = function () {
                     playClip(randomClipIndex(clipIndex));
                 };
@@ -35,23 +35,32 @@ export default {
         var light = sceneBridge.createLight({
             type: 'directional',
             color: [1, 1, 1],
-            intensity: 20,
+            intensity: 10,
             position: [-5, 7, -18],
             fixedTarget: true,
             target: [0, 0, 0]
         });
+        light.shadowCascade = 4;
+        light.cascadeSplitLogFactor = 0;
         light.shadowBias = 0.005;
         light.shadowResolution = 2048;
 
+        sceneBridge.createEnvironmentProbe({
+            min: [-2.6346957683563232, 0, -3.347585678100586],
+            max: [3.284651517868042, 3.20135760307312, 5.092456817626953]
+        })
+
         sceneBridge.loadModel('asset/model/kitchen/kitchen.gltf')
             .then(function (rootNode) {
-                viewMain.loadPanorama('asset/texture/Mans_Outside_2k.hdr', 0.5);
                 rootNode.rotation.rotateX(-Math.PI / 2);
 
-                viewMain.updateEnvironmentProbe();
+                viewMain.loadPanorama('asset/texture/Mans_Outside_2k.hdr', 0.5);
 
                 $.getJSON('asset/model/kitchen/mat.json').then(function (config) {
                     sceneBridge.loadConfig(config);
+
+                    viewMain.updateEnvironmentProbe();
+
                     sceneBridge.loadCameraAnimation('asset/model/kitchen/camera01-05.gltf')
                         .then(function (clips) {
                             var clipsArr = [];

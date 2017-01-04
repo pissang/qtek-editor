@@ -61,8 +61,6 @@ class ViewMain {
         this._postProcessOutput = new qtek.Texture2D();
 
         this._shadowMapPass = new qtek.prePass.ShadowMap({
-            shadowCascade: 2,
-            cascadeSplitLogFactor: 0
         });
 
         this._temporalSSPass = new TemporalSuperSampling();
@@ -156,7 +154,9 @@ class ViewMain {
         var lensflareTex = new qtek.Texture2D();
         var lensdirtTex = new qtek.Texture2D();
         self._sourceNode = self._compositor.getNodeByName('source');
-        lutTex.load('asset/texture/sedona.png')
+        // lutTex.load('asset/texture/sedona.png')
+        // lutTex.load('asset/texture/lut.png')
+        lutTex.load('asset/texture/lut/filmstock_50.png')
             .success(function () {
                 self.render();
             });
@@ -177,23 +177,12 @@ class ViewMain {
         var ambientLight = new qtek.light.AmbientSH({
             // Init coefficients
             coefficients: [0.8450393676757812, 0.7135089635848999, 0.6934053897857666, 0.02310405671596527, 0.17135757207870483, 0.28332242369651794, 0.343019962310791, 0.2880895435810089, 0.2998031973838806, 0.08001846075057983, 0.10719859600067139, 0.12824314832687378, 0.003927173092961311, 0.04206192493438721, 0.06470289081335068, 0.036095526069402695, 0.04928380250930786, 0.058642253279685974, -0.009344635531306267, 0.06963406503200531, 0.1312279999256134, -0.05935414880514145, -0.04865729808807373, -0.060036804527044296, 0.04625355824828148, 0.0563165508210659, 0.050963230431079865],
-            intensity: 0.6
+            intensity: 0.3
             // color: [250 / 255, 214 / 255, 165 / 255]
         });
         scene.add(ambientLight);
 
         this._ambientLight = ambientLight;
-
-        // var pointLight = new qtek.light.Point({
-        //     range: 8,
-        //     intensity: 1,
-        //     castShadow: false,
-        //     color: [1, 1, 1]
-        //     // color: [250 / 255, 214 / 255, 165 / 255]
-        // });
-        // pointLight.position.y = 1;
-        // pointLight.position.z = 0;
-        // scene.add(pointLight);
     }
 
     _initControl () {
@@ -266,6 +255,8 @@ class ViewMain {
             else if (lastSelected) {
                 lastSelected = null;
             }
+
+            self.render();
         });
     }
 
@@ -332,7 +323,7 @@ class ViewMain {
         }
 
         this._shadowMapPass.render(renderer, scene, camera);
-        this._colorFb.attach(renderer.gl, this._rawOutput);
+        this._colorFb.attach(this._rawOutput);
         this._colorFb.bind(renderer);
         var renderStat = renderer.render(scene, camera, true, true);
 
@@ -365,9 +356,7 @@ class ViewMain {
 
         this._cocNode.setParameter('depth', this._gBuffer.getDepthTex());
 
-        this._temporalSSFb.attach(
-            renderer.gl, this._postProcessOutput
-        );
+        this._temporalSSFb.attach(this._postProcessOutput);
         this._compositor.render(renderer, this._temporalSSFb);
 
         if (this.renderOthersAfterCompositing) {
@@ -474,7 +463,7 @@ class ViewMain {
             castShadow: false,
             culling: false
         });
-        skydome.scale.set(15, 15, 15);
+        skydome.scale.set(100, 100, 100);
         skydome.update();
         skydome.material.set('diffuseMap', envMap);
 

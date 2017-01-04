@@ -23,7 +23,7 @@ module.exports = {
 
                 cb && cb();
 
-                sceneBridge.getViewMain().loadPanorama('asset/texture/hall.hdr', 1, function (envmap) {
+                sceneBridge.getViewMain().loadPanorama('asset/texture/pisa.hdr', 1, function (envmap) {
                     sceneBridge.getViewMain().setEnvironmentMap(envmap);
                 });
 
