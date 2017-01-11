@@ -108,7 +108,8 @@ class ViewMain {
                 }
                 var material = materialMap[mesh.material.name] || new qtek.StandardMaterial({
                     name: mesh.material.name,
-                    environmentMapPrefiltered: true
+                    environmentMapPrefiltered: true,
+                    decodeRGBM: true
                 });
                 materialMap[mesh.material.name] = material;
                 mesh.material = material;
@@ -164,9 +165,12 @@ class ViewMain {
         lensflareTex.load('asset/texture/lensflare/lenscolor.png').success(function () { self.render(); });
         lensdirtTex.load('asset/texture/lensflare/lensdirt2.jpg').success(function () { self.render(); });
 
-        this._compositor.getNodeByName('lut').setParameter('lookup', lutTex);
+        var finalCompositeNode = this._compositor.getNodeByName('composite');
+        finalCompositeNode.shaderDefine('lut');
+        finalCompositeNode.setParameter('lut', lutTex);
+        finalCompositeNode.setParameter('lensdirt', lensdirtTex);
+
         this._compositor.getNodeByName('lensflare').setParameter('lenscolor', lensflareTex);
-        this._compositor.getNodeByName('tonemapping').setParameter('lensdirt', lensdirtTex);
 
         this._cocNode = self._compositor.getNodeByName('coc');
     }
@@ -268,6 +272,10 @@ class ViewMain {
         return this._scene;
     }
 
+    getRenderer () {
+        return this._renderer;
+    }
+
     switchFreeCamera (isFree) {
         var enabledControl = isFree ? this._firstPersonControl : this._orbitControl;
         var disabledControl = isFree ? this._orbitControl : this._firstPersonControl;
@@ -341,14 +349,14 @@ class ViewMain {
         if (this.enableSSR) {
             this._ssrPass.render(renderer, camera, this._rawOutput, this._ssaoPass.getTargetTexture());
             if (this._sourceNode) {
-                this._sourceNode.texture = this._ssrPass.getTargetTexture();
+                this._sourceNode.setParameter('texture', this._ssrPass.getTargetTexture());
                 this._sourceNode.shaderDefine('RGBM');
                 this._sourceNode.shaderUnDefine('RGBM_ENCODE');
             }
         }
         else {
             if (this._sourceNode) {
-                this._sourceNode.texture = this._rawOutput;
+                this._sourceNode.setParameter('texture', this._rawOutput);
                 this._sourceNode.shaderUnDefine('RGBM');
                 this._sourceNode.shaderDefine('RGBM_ENCODE');
             }
@@ -463,7 +471,7 @@ class ViewMain {
             castShadow: false,
             culling: false
         });
-        skydome.scale.set(100, 100, 100);
+        skydome.scale.set(1000, 1000, 1000);
         skydome.update();
         skydome.material.set('diffuseMap', envMap);
 

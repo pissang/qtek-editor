@@ -26,7 +26,7 @@ var EnvironmentProbe = qtek.Node.extend({
         var envMap = new qtek.TextureCube({
             width: this.resolution,
             height: this.resolution,
-            type: qtek.Texture.FLOAT
+            type: qtek.Texture.HALF_FLOAT
         });
         var envMapPass = new qtek.prePass.EnvironmentMap({
             texture: envMap,
@@ -43,7 +43,9 @@ var EnvironmentProbe = qtek.Node.extend({
     setEnvironmentMap: function (renderer, envMap) {
         if (this.prefilter) {
             var result = qtek.util.cubemap.prefilterEnvironmentMap(
-                renderer, envMap
+                renderer, envMap, {
+                    encodeRGBM: true
+                }
             );
             // Dispose previous
             envMap.dispose(renderer.gl);

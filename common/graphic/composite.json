@@ -6,7 +6,7 @@
     "nodes" : [
         {
             "name": "source",
-            "type": "texture",
+            "shader": "#source(qtek.compositor.output)",
             "outputs": {
                 "color": {
                     "parameters": {
@@ -16,9 +16,10 @@
                 }
             },
             "defines": {
-                "RGBM": null
+                "RGBM_ENCODE": null
             }
         },
+
         {
             "name": "source_half",
             "shader": "#source(qtek.compositor.downsample)",
@@ -28,10 +29,13 @@
             "outputs": {
                 "color": {
                     "parameters": {
-                        "width": "expr(width / 2)",
-                        "height": "expr(height / 2)"
+                        "width": "expr(width * dpr / 2)",
+                        "height": "expr(height * dpr / 2)"
                     }
                 }
+            },
+            "parameters" : {
+                "textureSize": "expr( [width * dpr, height * dpr] )"
             },
             "defines": {
                 "RGBM": null
@@ -48,15 +52,15 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 2)",
-                        "height" : "expr(height / 2)"
+                        "width" : "expr(width * dpr / 2)",
+                        "height" : "expr(height * dpr / 2)"
                     }
                 }
             },
             "parameters" : {
-                "threshold" : 10,
+                "threshold" : 4,
                 "scale": 4,
-                "textureSize": "expr([width / 2, height / 2])"
+                "textureSize": "expr([width * dpr / 2, height / 2])"
             },
             "defines": {
                 "RGBM": null,
@@ -72,13 +76,13 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 2)",
-                        "height" : "expr(height / 2)"
+                        "width" : "expr(width * dpr / 2)",
+                        "height" : "expr(height * dpr / 2)"
                     }
                 }
             },
             "parameters" : {
-                "threshold": 30,
+                "threshold": 20,
                 "scale": 0.01
             },
             "defines": {
@@ -95,13 +99,13 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 4)",
-                        "height" : "expr(height / 4)"
+                        "width" : "expr(width * dpr / 4)",
+                        "height" : "expr(height * dpr / 4)"
                     }
                 }
             },
             "parameters" : {
-                "textureSize": "expr( [width / 2, height / 2] )"
+                "textureSize": "expr( [width * dpr / 2, height / 2] )"
             },
             "defines": {
                 "RGBM": null
@@ -116,13 +120,13 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 8)",
-                        "height" : "expr(height / 8)"
+                        "width" : "expr(width * dpr / 8)",
+                        "height" : "expr(height * dpr / 8)"
                     }
                 }
             },
             "parameters" : {
-                "textureSize": "expr( [width / 4, height / 4] )"
+                "textureSize": "expr( [width * dpr / 4, height / 4] )"
             },
             "defines": {
                 "RGBM": null
@@ -137,13 +141,13 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 16)",
-                        "height" : "expr(height / 16)"
+                        "width" : "expr(width * dpr / 16)",
+                        "height" : "expr(height * dpr / 16)"
                     }
                 }
             },
             "parameters" : {
-                "textureSize": "expr( [width / 8, height / 8] )"
+                "textureSize": "expr( [width * dpr / 8, height / 8] )"
             },
             "defines": {
                 "RGBM": null
@@ -158,13 +162,13 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 32)",
-                        "height" : "expr(height / 32)"
+                        "width" : "expr(width * dpr / 32)",
+                        "height" : "expr(height * dpr / 32)"
                     }
                 }
             },
             "parameters" : {
-                "textureSize": "expr( [width / 16, height / 16] )"
+                "textureSize": "expr( [width * dpr / 16, height / 16] )"
             },
             "defines": {
                 "RGBM": null
@@ -181,14 +185,14 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 16)",
-                        "height" : "expr(height / 16)"
+                        "width" : "expr(width * dpr / 16)",
+                        "height" : "expr(height * dpr / 16)"
                     }
                 }
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureSize": "expr( [width / 32, height / 32] )"
+                "textureSize": "expr( [width * dpr / 32, height / 32] )"
             },
             "defines": {
                 "RGBM": null
@@ -203,14 +207,14 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 16)",
-                        "height" : "expr(height / 16)"
+                        "width" : "expr(width * dpr / 16)",
+                        "height" : "expr(height * dpr / 16)"
                     }
                 }
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureSize": "expr( [width / 32, height / 32] )"
+                "textureSize": "expr( [width * dpr / 32, height * dpr / 32] )"
             },
             "defines": {
                 "RGBM": null
@@ -228,14 +232,14 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 8)",
-                        "height" : "expr(height / 8)"
+                        "width" : "expr(width * dpr / 8)",
+                        "height" : "expr(height * dpr / 8)"
                     }
                 }
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureSize": "expr( [width / 16, height / 16] )"
+                "textureSize": "expr( [width * dpr / 16, height * dpr / 16] )"
             },
             "defines": {
                 "RGBM": null
@@ -250,14 +254,14 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 8)",
-                        "height" : "expr(height / 8)"
+                        "width" : "expr(width * dpr / 8)",
+                        "height" : "expr(height * dpr / 8)"
                     }
                 }
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureSize": "expr( [width / 16, height / 16] )"
+                "textureSize": "expr( [width * dpr / 16, height * dpr / 16] )"
             },
             "defines": {
                 "RGBM": null
@@ -273,8 +277,8 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 8)",
-                        "height" : "expr(height / 8)"
+                        "width" : "expr(width * dpr / 8)",
+                        "height" : "expr(height * dpr / 8)"
                     }
                 }
             },
@@ -297,14 +301,14 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 4)",
-                        "height" : "expr(height / 4)"
+                        "width" : "expr(width * dpr / 4)",
+                        "height" : "expr(height * dpr / 4)"
                     }
                 }
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureSize": "expr( [width / 8, height / 8] )"
+                "textureSize": "expr( [width * dpr / 8, height * dpr / 8] )"
             },
             "defines": {
                 "RGBM": null
@@ -319,14 +323,14 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 4)",
-                        "height" : "expr(height / 4)"
+                        "width" : "expr(width * dpr / 4)",
+                        "height" : "expr(height * dpr / 4)"
                     }
                 }
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureSize": "expr( [width / 8, height / 8] )"
+                "textureSize": "expr( [width * dpr / 8, height * dpr / 8] )"
             },
             "defines": {
                 "RGBM": null
@@ -342,8 +346,8 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 4)",
-                        "height" : "expr(height / 4)"
+                        "width" : "expr(width * dpr / 4)",
+                        "height" : "expr(height * dpr / 4)"
                     }
                 }
             },
@@ -369,14 +373,14 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 2)",
-                        "height" : "expr(height / 2)"
+                        "width" : "expr(width * dpr / 2)",
+                        "height" : "expr(height * dpr / 2)"
                     }
                 }
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureSize": "expr( [width / 4, height / 4] )"
+                "textureSize": "expr( [width * dpr / 4, height * dpr / 4] )"
             },
             "defines": {
                 "RGBM": null
@@ -391,14 +395,14 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 2)",
-                        "height" : "expr(height / 2)"
+                        "width" : "expr(width * dpr / 2)",
+                        "height" : "expr(height * dpr / 2)"
                     }
                 }
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureSize": "expr( [width / 4, height / 4] )"
+                "textureSize": "expr( [width * dpr / 4, height * dpr / 4] )"
             },
             "defines": {
                 "RGBM": null
@@ -414,8 +418,8 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 2)",
-                        "height" : "expr(height / 2)"
+                        "width" : "expr(width * dpr / 2)",
+                        "height" : "expr(height * dpr / 2)"
                     }
                 }
             },
@@ -430,7 +434,6 @@
 
 
 
-
         {
             "name" : "bright_upsample_full_blur_h",
             "shader" : "#source(qtek.compositor.gaussian_blur_h)",
@@ -440,14 +443,14 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width)",
-                        "height" : "expr(height)"
+                        "width" : "expr(width * dpr)",
+                        "height" : "expr(height * dpr)"
                     }
                 }
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureSize": "expr( [width / 2, height / 2] )"
+                "textureSize": "expr( [width * dpr / 2, height * dpr / 2] )"
             },
             "defines": {
                 "RGBM": null
@@ -462,21 +465,21 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width)",
-                        "height" : "expr(height)"
+                        "width" : "expr(width * dpr)",
+                        "height" : "expr(height * dpr)"
                     }
                 }
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureSize": "expr( [width / 2, height / 2] )"
+                "textureSize": "expr( [width * dpr / 2, height * dpr / 2] )"
             },
             "defines": {
                 "RGBM": null
             }
         },
         {
-            "name" : "bright_upsample_full_blend",
+            "name" : "bloom_composite",
             "shader" : "#source(qtek.compositor.blend)",
             "inputs" : {
                 "texture1" : "bright_upsample_full_blur_v",
@@ -485,8 +488,8 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width)",
-                        "height" : "expr(height)"
+                        "width" : "expr(width * dpr)",
+                        "height" : "expr(height * dpr)"
                     }
                 }
             },
@@ -508,8 +511,8 @@
                     "parameters": {
                         "minFilter": "NEAREST",
                         "magFilter": "NEAREST",
-                        "width": "expr(width)",
-                        "height": "expr(height)"
+                        "width": "expr(width * dpr)",
+                        "height": "expr(height * dpr)"
                     }
                 }
             }
@@ -526,21 +529,21 @@
                     "parameters": {
                         "minFilter": "NEAREST",
                         "magFilter": "NEAREST",
-                        "width": "expr(width / 2)",
-                        "height": "expr(height / 2)"
+                        "width": "expr(width * dpr / 2)",
+                        "height": "expr(height * dpr / 2)"
                     }
                 }
             },
             "parameters": {
-                "textureSize": "expr( [width / 2, height / 2] )"
+                "textureSize": "expr( [width * dpr, height * dpr] )"
             }
         },
 
         {
-            "name": "dof_far_blur_hexangonal_1",
-            "shader": "#source(qtek.compositor.dof.hexagonal_blur_1)",
+            "name": "dof_source_half",
+            "shader": "#source(qtek.compositor.dof.downsample)",
             "inputs": {
-                "texture": "source_half",
+                "texture": "source",
                 "coc": "coc"
             },
             "outputs": {
@@ -548,13 +551,38 @@
                     "parameters": {
                         "minFilter": "NEAREST",
                         "magFilter": "NEAREST",
-                        "width": "expr(width / 2)",
-                        "height": "expr(height / 2)"
+                        "width": "expr(width * dpr / 2)",
+                        "height": "expr(height * dpr / 2)"
                     }
                 }
             },
             "parameters": {
-                "textureSize": "expr( [width / 2, height / 2] )"
+                "textureSize": "expr( [width * dpr, height * dpr] )"
+            },
+            "defines": {
+                "RGBM": null
+            }
+        },
+
+        {
+            "name": "dof_far_blur_hexangonal_1",
+            "shader": "#source(qtek.compositor.dof.hexagonal_blur_1)",
+            "inputs": {
+                "texture": "dof_source_half",
+                "coc": "coc"
+            },
+            "outputs": {
+                "color": {
+                    "parameters": {
+                        "minFilter": "NEAREST",
+                        "magFilter": "NEAREST",
+                        "width": "expr(width * dpr / 2)",
+                        "height": "expr(height * dpr / 2)"
+                    }
+                }
+            },
+            "parameters": {
+                "textureSize": "expr( [width * dpr / 2, height * dpr / 2] )"
             },
             "defines": {
                 "RGBM": null
@@ -564,7 +592,7 @@
             "name": "dof_far_blur_hexangonal_2",
             "shader": "#source(qtek.compositor.dof.hexagonal_blur_2)",
             "inputs": {
-                "texture": "source_half",
+                "texture": "dof_source_half",
                 "coc": "coc"
             },
             "outputs": {
@@ -572,13 +600,13 @@
                     "parameters": {
                         "minFilter": "NEAREST",
                         "magFilter": "NEAREST",
-                        "width": "expr(width / 2)",
-                        "height": "expr(height / 2)"
+                        "width": "expr(width * dpr / 2)",
+                        "height": "expr(height * dpr / 2)"
                     }
                 }
             },
             "parameters": {
-                "textureSize": "expr( [width / 2, height / 2] )"
+                "textureSize": "expr( [width * dpr / 2, height * dpr / 2] )"
             },
             "defines": {
                 "RGBM": null
@@ -597,13 +625,13 @@
                     "parameters": {
                         "minFilter": "NEAREST",
                         "magFilter": "NEAREST",
-                        "width": "expr(width / 2)",
-                        "height": "expr(height / 2)"
+                        "width": "expr(width * dpr / 2)",
+                        "height": "expr(height * dpr / 2)"
                     }
                 }
             },
             "parameters": {
-                "textureSize": "expr( [width / 2, height / 2] )"
+                "textureSize": "expr( [width * dpr / 2, height * dpr / 2] )"
             },
             "defines": {
                 "RGBM": null
@@ -614,7 +642,7 @@
             "name": "dof_near_blur_hexangonal_1",
             "shader": "#source(qtek.compositor.dof.hexagonal_blur_1)",
             "inputs": {
-                "texture": "source_half",
+                "texture": "dof_source_half",
                 "coc": "coc"
             },
             "outputs": {
@@ -622,13 +650,13 @@
                     "parameters": {
                         "minFilter": "NEAREST",
                         "magFilter": "NEAREST",
-                        "width": "expr(width / 2)",
-                        "height": "expr(height / 2)"
+                        "width": "expr(width * dpr / 2)",
+                        "height": "expr(height * dpr / 2)"
                     }
                 }
             },
             "parameters": {
-                "textureSize": "expr( [width / 2, height / 2] )"
+                "textureSize": "expr( [width * dpr / 2, height * dpr / 2] )"
             },
             "defines": {
                 "RGBM": null,
@@ -639,7 +667,7 @@
             "name": "dof_near_blur_hexangonal_2",
             "shader": "#source(qtek.compositor.dof.hexagonal_blur_2)",
             "inputs": {
-                "texture": "source_half",
+                "texture": "dof_source_half",
                 "coc": "coc"
             },
             "outputs": {
@@ -647,13 +675,13 @@
                     "parameters": {
                         "minFilter": "NEAREST",
                         "magFilter": "NEAREST",
-                        "width": "expr(width / 2)",
-                        "height": "expr(height / 2)"
+                        "width": "expr(width * dpr / 2)",
+                        "height": "expr(height * dpr / 2)"
                     }
                 }
             },
             "parameters": {
-                "textureSize": "expr( [width / 2, height / 2] )"
+                "textureSize": "expr( [width * dpr / 2, height * dpr / 2] )"
             },
             "defines": {
                 "RGBM": null,
@@ -673,13 +701,13 @@
                     "parameters": {
                         "minFilter": "NEAREST",
                         "magFilter": "NEAREST",
-                        "width": "expr(width / 2)",
-                        "height": "expr(height / 2)"
+                        "width": "expr(width * dpr / 2)",
+                        "height": "expr(height * dpr / 2)"
                     }
                 }
             },
             "parameters": {
-                "textureSize": "expr( [width / 2, height / 2] )"
+                "textureSize": "expr( [width * dpr / 2, height * dpr / 2] )"
             },
             "defines": {
                 "RGBM": null,
@@ -699,13 +727,13 @@
                     "parameters": {
                         "minFilter": "NEAREST",
                         "magFilter": "NEAREST",
-                        "width": "expr(width / 2)",
-                        "height": "expr(height / 2)"
+                        "width": "expr(width * dpr / 2)",
+                        "height": "expr(height * dpr / 2)"
                     }
                 }
             },
             "parameters": {
-                "textureSize": "expr( [width / 2, height / 2] )"
+                "textureSize": "expr( [width * dpr / 2, height * dpr / 2] )"
             },
             "defines": {
                 "BLUR_COC": null
@@ -722,13 +750,13 @@
                     "parameters": {
                         "minFilter": "NEAREST",
                         "magFilter": "NEAREST",
-                        "width": "expr(width / 2)",
-                        "height": "expr(height / 2)"
+                        "width": "expr(width * dpr / 2)",
+                        "height": "expr(height * dpr / 2)"
                     }
                 }
             },
             "parameters": {
-                "textureSize": "expr( [width / 2, height / 2] )"
+                "textureSize": "expr( [width * dpr / 2, height * dpr / 2] )"
             },
             "defines": {
                 "BLUR_COC": null
@@ -746,13 +774,13 @@
                     "parameters": {
                         "minFilter": "NEAREST",
                         "magFilter": "NEAREST",
-                        "width": "expr(width / 2)",
-                        "height": "expr(height / 2)"
+                        "width": "expr(width * dpr / 2)",
+                        "height": "expr(height * dpr / 2)"
                     }
                 }
             },
             "parameters": {
-                "textureSize": "expr( [width / 2, height / 2] )"
+                "textureSize": "expr( [width * dpr / 2, height * dpr / 2] )"
             },
             "defines": {
                 "BLUR_COC": null
@@ -771,13 +799,13 @@
                     "parameters": {
                         "minFilter": "NEAREST",
                         "magFilter": "NEAREST",
-                        "width": "expr(width)",
-                        "height": "expr(height)"
+                        "width": "expr(width * dpr)",
+                        "height": "expr(height * dpr)"
                     }
                 }
             },
             "parameters": {
-                "textureSize": "expr( [width / 2, height / 2] )"
+                "textureSize": "expr( [width * dpr / 2, height * dpr / 2] )"
             },
             "defines": {
                 "RGBM": null
@@ -796,13 +824,13 @@
                     "parameters": {
                         "minFilter": "NEAREST",
                         "magFilter": "NEAREST",
-                        "width": "expr(width)",
-                        "height": "expr(height)"
+                        "width": "expr(width * dpr)",
+                        "height": "expr(height * dpr)"
                     }
                 }
             },
             "parameters": {
-                "textureSize": "expr( [width / 2, height / 2] )"
+                "textureSize": "expr( [width * dpr / 2, height * dpr / 2] )"
             },
             "defines": {
                 "RGBM": null
@@ -820,13 +848,13 @@
                     "parameters": {
                         "minFilter": "NEAREST",
                         "magFilter": "NEAREST",
-                        "width": "expr(width)",
-                        "height": "expr(height)"
+                        "width": "expr(width * dpr)",
+                        "height": "expr(height * dpr)"
                     }
                 }
             },
             "parameters": {
-                "textureSize": "expr( [width / 2, height / 2] )"
+                "textureSize": "expr( [width * dpr / 2, height * dpr / 2] )"
             }
         },
 
@@ -845,8 +873,8 @@
                     "parameters": {
                         "minFilter": "NEAREST",
                         "magFilter": "NEAREST",
-                        "width": "expr(width)",
-                        "height": "expr(height)"
+                        "width": "expr(width * dpr)",
+                        "height": "expr(height * dpr)"
                     }
                 }
             },
@@ -864,13 +892,13 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 2)",
-                        "height" : "expr(height / 2)"
+                        "width" : "expr(width * dpr / 2)",
+                        "height" : "expr(height * dpr / 2)"
                     }
                 }
             },
             "parameters" : {
-                "textureSize" : "expr([width / 2, height / 2])",
+                "textureSize" : "expr([width * dpr / 2, height * dpr / 2])",
                 "lensColor" : "#lenscolor"
             },
             "defines": {
@@ -886,14 +914,14 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 2)",
-                        "height" : "expr(height / 2)"
+                        "width" : "expr(width * dpr / 2)",
+                        "height" : "expr(height * dpr / 2)"
                     }
                 }
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureSize" : "expr([width / 2, height / 2])"
+                "textureSize" : "expr([width * dpr / 2, height * dpr / 2])"
             },
             "defines": {
                 "RGBM": null
@@ -908,83 +936,44 @@
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width / 2)",
-                        "height" : "expr(height / 2)"
+                        "width" : "expr(width * dpr / 2)",
+                        "height" : "expr(height * dpr / 2)"
                     }
                 }
             },
             "parameters" : {
                 "blurSize" : 1,
-                "textureSize" : "expr([width / 2, height / 2])"
+                "textureSize" : "expr([width * dpr / 2, height * dpr / 2])"
             },
             "defines": {
                 "RGBM": null
             }
         },
         {
-            "name" : "tonemapping",
-            "shader" : "#source(qtek.compositor.hdr.tonemapping)",
+            "name" : "composite",
+            "shader" : "#source(qtek.compositor.hdr.composite)",
             "inputs" : {
                 "texture" : "dof_composite",
-                "bloom" : "bright_upsample_full_blend",
+                "bloom" : "bloom_composite",
                 "lensflare" : "lensflare_blur_v"
             },
             "outputs" : {
                 "color" : {
                     "parameters" : {
-                        "width" : "expr(width)",
-                        "height" : "expr(height)"
+                        "width" : "expr(width * dpr)",
+                        "height" : "expr(height * dpr)"
                     }
                 }
-            },
-            "parameters" : {
-                "blurSize" : 1,
-                "lensflareIntensity" : 0.2
             },
             "defines": {
                 "RGBM_DECODE": null
             }
         },
         {
-            "name": "lut",
-            "shader": "#source(qtek.compositor.lut)",
-            "type": "filter",
-            "inputs": {
-                "texture": "tonemapping"
-            },
-            "outputs": {
-                "color" : {
-                    "parameters" : {
-                        "width" : "expr(width)",
-                        "height" : "expr(height)"
-                    }
-                }
-            }
-        },
-        {
-            "name": "vignette",
-            "shader": "#source(qtek.compositor.vignette)",
-            "inputs": {
-                "texture": "lut"
-            },
-            "outputs": {
-                "color" : {
-                    "parameters" : {
-                        "width" : "expr(width)",
-                        "height" : "expr(height)"
-                    }
-                }
-            },
-            "parameters": {
-                "darkness": 0.5,
-                "offset": 1
-            }
-        },
-        {
             "name" : "FXAA",
             "shader" : "#source(qtek.compositor.fxaa3)",
             "inputs" : {
-                "texture" : "vignette"
+                "texture" : "composite"
             }
         }
     ]

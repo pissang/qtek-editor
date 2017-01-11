@@ -54,6 +54,45 @@ class SceneBridge {
         this._textureCache = {};
     }
 
+    _getTexture (path) {
+        var self = this;
+        if (this._textureCache[path]) {
+            return this._textureCache[path].texture;
+        }
+
+        var texture = new qtek.Texture2D({
+            wrapS: qtek.Texture.REPEAT,
+            wrapT: qtek.Texture.REPEAT,
+            anisotropic: 8
+        });
+
+        texture.load(path).success(function () {
+            self._viewMain.render();
+        });
+
+        this._textureCache[path] = {
+            texture: texture,
+            usedCount: 1
+        };
+
+        return texture;
+    }
+
+    _releaseTexture (texture) {
+        var textureCache = this._textureCache;
+        for (var path in textureCache) {
+            if (texture === textureCache[path].texture) {
+                textureCache[path].usedCount--;
+                if (!textureCache[path].usedCount) {
+                    // TODO Should not aware WebGLRenderingContext?
+                    textureCache[path].texture.dispose(this._viewMain.getRenderer().gl);
+                    textureCache[path] = null;
+                }
+                break;
+            }
+        }
+    }
+
     loadModel (url) {
         var rootNode = new qtek.Node({
             name: url.split('/').pop()
@@ -107,32 +146,21 @@ class SceneBridge {
 
         TEXTURE_PROPERTIES.forEach(function (name) {
             var textureFileName = config[name];
+
+            var oldTexture = mat[name];
+            var newTexture;
             if (textureFileName) {
                 var path = this.textureRootPath + '/' + textureFileName;
-                if (this._textureCache[path]) {
-                    mat[name] = this._textureCache[path];
-                    return;
-                }
 
-                var texture = mat[name] || new qtek.Texture2D({
-                    wrapS: qtek.Texture.REPEAT,
-                    wrapT: qtek.Texture.REPEAT,
-                    anisotropic: 8
-                });
-                if (texture && texture.image && texture.image.src === path) {
-                    return;
-                }
-                texture.load(path).success(function () {
-                    self._viewMain.render();
-                });
-                // FIXME
-                mat[name] = texture;
-
-                this._textureCache[path] = texture;
+                newTexture = mat[name] = this._getTexture(path);
             }
             else {
                 mat[name] = null;
             }
+            if (oldTexture && oldTexture !== newTexture) {
+                this._releaseTexture(oldTexture);
+            }
+
         }, this);
 
         this._viewMain.render();
